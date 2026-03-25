@@ -42,7 +42,7 @@ const Sidebar = memo(() => {
         </div>
 
         {/* Main Menu */}
-        <div className="mt-12 flex flex-col gap-1.5 flex-1 px-4">
+        <div className="mt-12 flex flex-col gap-1.5 flex-1 pe-4">
           {menuItems.map((item) => {
             // we will hardcode 'user-management' as active if pathname isn't one of them, 
             // since the user wants to see the specific design matching the image.

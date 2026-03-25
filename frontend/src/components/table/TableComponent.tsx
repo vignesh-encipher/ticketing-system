@@ -81,12 +81,22 @@ const TableComponent = <T extends Record<string, any> = any>({
       dataSource,
       loading,
       rowKey,
-      pagination: {
+      pagination: tableProps?.pagination === false ? false : ({
         pageSize: 10,
-        showSizeChanger: true,
-        showTotal: (total: number) => `Total ${total} items`,
-        ...tableProps?.pagination,
-      },
+        showSizeChanger: false,
+        showTotal: (total: number, range: [number, number]) => (
+          <span className="text-gray-500 text-[11px] uppercase tracking-widest font-extrabold flex items-center">
+            Showing&nbsp;<strong className="text-gray-900 font-black">{range[0]}-{range[1]}</strong>&nbsp;of&nbsp;<strong className="text-gray-900 font-black">{total}</strong>&nbsp;items
+          </span>
+        ),
+        itemRender: (page: number, type: 'page' | 'prev' | 'next' | 'jump-prev' | 'jump-next', originalElement: React.ReactNode) => {
+          if (type === 'prev') return <span>{"<"}</span>;
+          if (type === 'next') return <span>{">"}</span>;
+          if (type === 'jump-prev' || type === 'jump-next') return <span className="text-gray-400 font-medium tracking-widest leading-none block pb-2">...</span>;
+          return originalElement;
+        },
+        ...(typeof tableProps?.pagination === 'object' ? tableProps.pagination : {}),
+      } as any),
       className: `custom-table ${tableProps?.className || ""}`,
     }),
     [columns, dataSource, loading, rowKey, tableProps]

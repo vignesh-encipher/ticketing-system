@@ -43,3 +43,78 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* Custom Table Pagination Overrides */
+.custom-table .ant-table-pagination.ant-pagination {
+  margin: 0 !important;
+  background-color: #f9fafb;
+  border-top: 1px solid #f9fafb;
+  padding: 1rem 1.5rem !important;
+  display: flex !important;
+  align-items: center;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+.custom-table .ant-pagination-total-text {
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+}
+
+.custom-table .ant-pagination-item,
+.custom-table .ant-pagination-prev,
+.custom-table .ant-pagination-next,
+.custom-table .ant-pagination-jump-prev,
+.custom-table .ant-pagination-jump-next {
+  min-width: 32px;
+  height: 32px;
+  line-height: 30px;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 4px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #4b5563 !important;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-table .ant-pagination-item a,
+.custom-table .ant-pagination-prev a,
+.custom-table .ant-pagination-next a,
+.custom-table .ant-pagination-prev button,
+.custom-table .ant-pagination-next button {
+  color: inherit !important;
+  background: transparent !important;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.custom-table .ant-pagination-item:hover,
+.custom-table .ant-pagination-prev:hover:not(.ant-pagination-disabled),
+.custom-table .ant-pagination-next:hover:not(.ant-pagination-disabled) {
+  background-color: #ebf0fc !important;
+  color: #0033a0 !important;
+}
+
+.custom-table .ant-pagination-item-active {
+  background-color: #ebf0fc !important;
+  color: #0033a0 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.custom-table .ant-pagination-item-active a {
+  color: #0033a0 !important;
+}
+
+.custom-table .ant-pagination-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
