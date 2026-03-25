@@ -1,5 +1,4 @@
-
-"use client"
+"use client";
 import React from "react";
 import { Tag, Avatar, Button, Input, Timeline, Space } from "antd";
 // Note the '/ai' at the end of the import path
@@ -174,17 +173,11 @@ const DynamicTicketView: React.FC<TicketProps> = () => {
   if (!data) return <div>Loading...</div>;
 
   return (
-    <div className="h-[80vh] bg-white p-8 font-sans text-slate-900">
+    <div className="h-[80vh] bg-white font-sans text-slate-900">
       {/* --- HEADER --- */}
       <div className="flex justify-between items-start mb-8">
         <div>
           <div className="flex gap-2 mb-4">
-            <Tag className="bg-indigo-50 text-indigo-700 border-none font-bold px-3 py-1 cursor-pointer" onClick={() => router.back()}>
-              <div className="flex items-center gap-2">
-                <FaArrowLeft />
-                Back
-              </div>
-            </Tag>
             <Tag className="bg-indigo-50 text-indigo-700 border-none font-bold px-3 py-1">
               #{data.id}
             </Tag>
@@ -195,7 +188,14 @@ const DynamicTicketView: React.FC<TicketProps> = () => {
               {data.priority}
             </Tag>
           </div>
-          <h1 className="text-4xl font-extrabold text-slate-800 tracking-tight">
+          <h1 className="text-4xl font-extrabold text-slate-800 flex gap-3 tracking-tight">
+            <div
+              className="flex items-center text-lg py-1 gap-2 cursor-pointer text-indigo-600 transition-colors border border-indigo-600 rounded-lg px-2"
+              onClick={() => router.back()}
+            >
+              <FaArrowLeft />
+              Back
+            </div>
             {data.title}
           </h1>
         </div>
