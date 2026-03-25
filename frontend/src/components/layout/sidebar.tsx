@@ -14,15 +14,9 @@ import {
   AiOutlinePlus,
 } from "react-icons/ai";
 import { BsGrid1X2Fill } from "react-icons/bs";
+import { menuItems } from "./menus";
 
 const { Sider } = Layout;
-
-const menuItems = [
-  { key: "dashboard", icon: AiOutlineAppstore, label: "Dashboard", href: "/admin/dashboard" },
-  { key: "user-management", icon: AiOutlineTeam, label: "User Management", href: "/admin/user-management" },
-  { key: "departments", icon: AiOutlineFolder, label: "Departments", href: "/admin/departments" },
-  { key: "global-search", icon: AiOutlineSearch, label: "Global Search", href: "/admin/global-search" },
-];
 
 const Sidebar = memo(() => {
   const pathname = usePathname();
@@ -33,7 +27,7 @@ const Sidebar = memo(() => {
       className="bg-[#f8f9fa] fixed left-0 top-0 bottom-0 z-50 border-r border-gray-200"
       theme="light"
     >
-      <div className="flex flex-col h-full bg-[#f8f9fa] pt-8">
+      <div className="flex flex-col h-[100vh] bg-[#f8f9fa] pt-8">
         {/* Logo Section */}
         <div className="flex items-center gap-3 px-8 h-16 w-full cursor-pointer">
           <div className="w-10 h-10 bg-primary rounded-[10px] flex items-center justify-center text-white text-xl flex-shrink-0 shadow-sm relative">
@@ -76,13 +70,6 @@ const Sidebar = memo(() => {
               </Link>
             );
           })}
-
-          <div className="mt-10 px-2 w-full">
-            <button className="w-full bg-primary-btn hover:bg-primary-btn-hover text-white py-3.5 px-4 rounded-[10px] flex items-center justify-center gap-2 font-semibold transition-colors shadow-md text-[14px]">
-              <AiOutlinePlus className="text-lg font-bold" />
-              Create Ticket
-            </button>
-          </div>
         </div>
 
         {/* Bottom Menu */}

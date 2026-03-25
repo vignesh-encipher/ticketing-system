@@ -43,8 +43,8 @@ const LayoutPage = ({ role = "admin", children }: LayoutPageProps) => {
         <Layout
           className="transition-all duration-200"
           style={{
-            marginLeft: 260, // match sider width
-            marginTop: 80, // header height
+            marginLeft: 240, // match sider width
+            marginTop: 40, // header height
           }}
         >
           <Content

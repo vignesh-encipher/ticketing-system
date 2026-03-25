@@ -8,7 +8,7 @@ const { Header: AntHeader } = Layout;
 
 const Header = memo(() => {
   return (
-    <AntHeader className="bg-white flex items-center justify-between h-[80px] border-b border-gray-200 fixed top-0 right-0 z-40 px-8 transition-colors duration-300" style={{ left: 260, paddingInline: 32 }}>
+    <AntHeader className="bg-[#f8f9fa] flex items-center justify-between h-[80px] border-b border-gray-200 fixed top-0 right-0 z-40 px-8 transition-colors duration-300" style={{ left: 260, paddingInline: 32, backgroundColor: "#f8f9fa" }}>
       {/* Left side: Search bar */}
       <div className="flex-1 max-w-xl">
         <div className="relative flex items-center w-full h-10 rounded-md bg-[#f0f2f5] overflow-hidden">
@@ -26,17 +26,7 @@ const Header = memo(() => {
 
       {/* Right side: Nav and Profile */}
       <div className="flex items-center text-sm font-semibold text-gray-600 h-full">
-        <div className="flex items-center gap-6 mr-6">
-          <a href="#" className="hover:text-gray-900 transition-colors">HR</a>
-          <a href="#" className="hover:text-gray-900 transition-colors">Marketing</a>
-          <a href="#" className="hover:text-gray-900 transition-colors">Design</a>
-          <a href="#" className="hover:text-gray-900 transition-colors">IT</a>
-        </div>
-        
-        <div className="relative cursor-pointer mr-6 flex items-center h-full">
-          <AiOutlineBell className="text-2xl text-gray-500 hover:text-gray-700" />
-          <span className="absolute top-[35%] right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-        </div>
+       
 
         <div className="flex items-center gap-3 pl-6 border-l border-gray-200 h-10">
           <div className="flex flex-col items-end justify-center">
