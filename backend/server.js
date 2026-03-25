@@ -1,0 +1,51 @@
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const { errorHandler } = require('./middleware/errorHandler');
+
+const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(cors({ origin: ['http://localhost:3000', 'http://127.0.0.1:3000'], credentials: true }));
+
+// Routes
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/projects', require('./routes/projectRoutes'));
+app.use('/api/tickets', require('./routes/ticketRoutes'));
+
+// Error Handler
+app.use(errorHandler);
+
+const User = require('./models/User');
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI).then(async () => {
+    console.log('Connected to MongoDB');
+    
+    // Default User Seed
+    try {
+        const adminExists = await User.findOne({ email: 'admin@test.com' });
+        if (!adminExists) {
+            await User.create({
+                name: 'admin',
+                dateOfBirth: new Date('1990-01-01'),
+                email: 'admin@test.com',
+                phoneNumber: '1234567890',
+                password: 'admin123',
+                role: 'Admin'
+            });
+            console.log('Default Admin user seeded');
+        }
+    } catch (err) {
+        console.error('Failed to seed admin', err);
+    }
+
+    app.listen(process.env.PORT || 5000, () => {
+        console.log(`Server running on port ${process.env.PORT || 5000}`);
+    });
+}).catch(err => {
+    console.error('MongoDB connection error:', err);
+});
