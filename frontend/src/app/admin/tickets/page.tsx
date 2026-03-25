@@ -8,6 +8,7 @@ import CreateTicketDrawer from "./components/createTicket/page";
 import type { ColumnsType } from "antd/es/table";
 import { AiOutlineMore } from "react-icons/ai";
 import { getPriority, getStatus } from "@/util/shared-functions";
+import { useRouter } from "next/navigation";
 
 // Mock data based on the provided image
 const tickets = [
@@ -206,6 +207,7 @@ const filterItems = [
 ];
 
 const TicketsPage = () => {
+  const router = useRouter();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({});
   return (
@@ -264,6 +266,10 @@ const TicketsPage = () => {
           columns={columns}
           dataSource={tickets}
           rowKey="id"
+          onRowClick={(record) => {
+            console.log("Row clicked:", record);
+            router.push(`/admin/tickets/details/${record.id}`);
+          }}  
           tableProps={{
             pagination: {
               total: 1284,
