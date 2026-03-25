@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 import { Form, Input, Select, Button, Upload, message, Drawer } from "antd";
 import {
@@ -9,6 +10,7 @@ import {
   SendOutlined,
 } from "@ant-design/icons";
 import { AiOutlineClose } from "react-icons/ai";
+import TicketEditor from "@/components/textareaAttachment/page";
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
@@ -24,6 +26,13 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [ticketData, setTicketData] = useState<{
+    htmlContent: string;
+    attachments: File[];
+  }>({
+    htmlContent: "",
+    attachments: [],
+  });
 
   const onFinish = (values: any) => {
     setLoading(true);
@@ -126,7 +135,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({
             </div>
             <TextArea
               rows={6}
-              bordered={false}
+              variant="filled"
               className="p-4 bg-white"
               placeholder="Provide detailed context, requirements, and desired outcomes..."
             />
@@ -141,17 +150,19 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({
               Attachments
             </span>
           }
+          valuePropName="fileList"
+          getValueFromEvent={e => e && e.fileList}
         >
           <Dragger
             multiple
             className="bg-white border-2 border-dashed border-slate-200 rounded-xl hover:border-blue-400 transition-colors"
             beforeUpload={() => false} // Prevent auto-upload for demo
           >
-            <p className="ant-upload-drag-icon">
+            <div className="ant-upload-drag-icon">
               <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                 <InboxOutlined className="text-blue-600 text-xl color-[#143477] cursor-pointer" />
               </div>
-            </p>
+            </div>
             <p className="text-slate-800 font-semibold mb-1">
               Drop files here or click to upload
             </p>
@@ -160,6 +171,12 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({
             </p>
           </Dragger>
         </Form.Item>
+
+
+        <TicketEditor 
+          onChange={(html) => setTicketData(prev => ({ ...prev, htmlContent: html }))}
+          onFilesChange={(files) => setTicketData(prev => ({ ...prev, attachments: files }))}
+        />
 
         {/* Actions */}
         <div className="flex justify-end items-center gap-6 mt-12">
