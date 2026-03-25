@@ -165,7 +165,7 @@ const UsersPage = () => {
   const [selectedFilters, setSelectedFilters] = useState({});
 
   return (
-    <div className="max-w-7xl mx-auto h-full flex flex-col pb-12">
+    <div className=" h-full flex flex-col pb-12">
       {/* Header Section */}
       <div className="flex justify-between items-start mb-10 pt-4">
         <div className="max-w-xl">
