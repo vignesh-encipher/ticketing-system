@@ -20,6 +20,7 @@ interface FiltersProps {
   selectedOption?: any;
   setSelectedOption?: (val: any) => void;
   onReset?: () => void;
+  onApply?: () => void;
 }
 
 const Filters: React.FC<FiltersProps> = ({
@@ -27,98 +28,80 @@ const Filters: React.FC<FiltersProps> = ({
   selectedOption = {},
   setSelectedOption,
   onReset,
+  onApply,
 }) => {
   // Normalize object/array to array
   const items = Array.isArray(FilterItems) ? FilterItems : Object.values(FilterItems);
 
   return (
-    <div className="flex-1 bg-white rounded-[16px] shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 p-6 flex flex-wrap items-center gap-4">
-      {items.map((item, index) => {
-        if (item.active === false) return null;
+    <div className="flex-1 w-full bg-[#f8f9fa] rounded-[16px] p-6 flex flex-col md:flex-row md:items-end justify-between gap-6 shadow-sm border border-gray-100/50">
+      <div className="flex flex-1 gap-6 w-full">
+        {items.map((item, index) => {
+          if (item.active === false) return null;
 
-        if (item.type === "select") {
           return (
-            <div
-              key={`${item.name}-${index}`}
-              className="bg-[#f5f7f9] hover:bg-[#ebedf0] transition-colors pl-4 pr-1 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 text-gray-800"
-            >
+            <div key={`${item.name}-${index}`} className="flex-1 flex flex-col gap-2">
               {item.title && (
-                <span className="text-gray-400 font-extrabold uppercase tracking-wide text-[11px]">
-                  {item.title}:
-                </span>
+                <label className="text-gray-500 font-extrabold text-[11px] uppercase tracking-widest ml-1">
+                  {item.title}
+                </label>
               )}
-              <Select
-                bordered={false}
-                className="min-w-[130px] [&_.ant-select-selector]:!bg-transparent [&_.ant-select-selection-item]:!font-bold [&_.ant-select-selection-item]:text-gray-800 shadow-none"
-                placeholder={item.placeholder}
-                options={item.options}
-                value={selectedOption?.[item.name] || item.options?.[0]?.value}
-                onChange={(val) =>
-                  setSelectedOption && setSelectedOption({ ...selectedOption, [item.name]: val })
-                }
-              />
+              
+              {item.type === "select" && (
+                <Select
+                  className="w-full"
+                  placeholder={item.placeholder}
+                  options={item.options}
+                  value={selectedOption?.[item.name] || item.options?.[0]?.value}
+                  onChange={(val) =>
+                    setSelectedOption && setSelectedOption({ ...selectedOption, [item.name]: val })
+                  }
+                  suffixIcon={
+                    <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
+                      <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  }
+                  size="large"
+                  showSearch
+                  allowClear
+                />
+              )}
+
+              {item.type === "search" && (
+                <Input
+                  placeholder={item.placeholder}
+                  className="w-full bg-white border border-gray-200 text-gray-800  font-semibold rounded-[12px] px-4 shadow-sm hover:border-[#89eed4] focus:border-[#89eed4]"
+                  value={selectedOption?.[item.name]}
+                  onChange={(e) =>
+                    setSelectedOption && setSelectedOption({ ...selectedOption, [item.name]: e.target.value })
+                  }
+                />
+              )}
+
+              {item.type === "datePicker" && (
+                <DatePicker
+                  placeholder={item.placeholder}
+                  className="w-full bg-white border border-gray-200 text-gray-800 font-semibold rounded-[12px] px-4  shadow-sm hover:border-[#89eed4] focus:border-[#89eed4]"
+                  onChange={(date, dateString) =>
+                    setSelectedOption && setSelectedOption({ ...selectedOption, [item.name]: dateString })
+                  }
+                />
+              )}
             </div>
           );
-        }
+        })}
+      </div>
 
-        if (item.type === "search") {
-          return (
-            <div
-              key={`${item.name}-${index}`}
-              className="bg-[#f5f7f9] hover:bg-[#ebedf0] transition-colors px-2 py-1.5 rounded-lg flex items-center"
-            >
-              {item.title && (
-                <span className="text-gray-400 font-extrabold uppercase tracking-wide text-[11px] pl-2 mr-1">
-                  {item.title}:
-                </span>
-              )}
-              <Input
-                bordered={false}
-                placeholder={item.placeholder}
-                className="!bg-transparent !shadow-none font-semibold text-gray-800 min-w-[200px]"
-                value={selectedOption?.[item.name]}
-                onChange={(e) =>
-                  setSelectedOption && setSelectedOption({ ...selectedOption, [item.name]: e.target.value })
-                }
-              />
-            </div>
-          );
-        }
-
-        if (item.type === "datePicker") {
-          return (
-             <div
-              key={`${item.name}-${index}`}
-              className="bg-[#f5f7f9] hover:bg-[#ebedf0] transition-colors pl-4 pr-1 py-1.5 rounded-lg flex items-center gap-1"
-            >
-              {item.title && (
-                <span className="text-gray-400 font-extrabold uppercase tracking-wide text-[11px]">
-                  {item.title}:
-                </span>
-              )}
-              <DatePicker
-                bordered={false}
-                placeholder={item.placeholder}
-                className="!bg-transparent !shadow-none font-semibold text-gray-800"
-                onChange={(date, dateString) =>
-                  setSelectedOption && setSelectedOption({ ...selectedOption, [item.name]: dateString })
-                }
-              />
-            </div>
-          )
-        }
-
-        return null;
-      })}
-
-      <div className="ml-auto">
-        <button
-          onClick={onReset}
-          className="text-[#008f85] hover:text-[#007068] font-bold text-sm flex items-center gap-1.5 transition-colors"
-        >
-          <AiOutlineClear className="text-lg" />
-          Reset Filters
-        </button>
+      <div className="shrink-0 flex items-center gap-3">
+        {onReset && (
+          <button
+            onClick={onReset}
+            className="text-gray-400 hover:text-gray-600 font-bold text-sm flex items-center gap-1.5 transition-colors px-4"
+          >
+            <AiOutlineClear className="text-lg" />
+            Reset
+          </button>
+        )}
       </div>
     </div>
   );

@@ -118,3 +118,22 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Tickets Page Pagination active override */
+.ant-table-pagination-custom-override .ant-pagination-item-active {
+  background-color: #143477 !important;
+  color: white !important;
+}
+
+.ant-table-pagination-custom-override .ant-pagination-item-active a {
+  color: white !important;
+}
+
+.ant-table-pagination-custom-override .ant-pagination-item:hover {
+  background-color: #f1f5f9 !important;
+  color: #143477 !important;
+}
+
+:where(.css-dev-only-do-not-override-1pocwgf).ant-upload-wrapper .ant-upload-drag p.ant-upload-drag-icon .anticon {
+  color: #143477 !important;
+}
