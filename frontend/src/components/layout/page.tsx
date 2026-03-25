@@ -32,27 +32,23 @@ const LayoutPage = ({ role = "admin", children }: LayoutPageProps) => {
 
   return (
     <ConfigProvider theme={themeConfig}>
-      <Layout className="min-h-screen">
+      <Layout className="min-h-screen bg-white">
         <div className="fixed top-0 left-0 right-0 z-50">
           <Header />
         </div>
 
         <div className="fixed z-40">
-          <Sidebar
-            role={role}
-            collapsed={collapsed}
-            onCollapse={setCollapsed}
-          />
+          <Sidebar />
         </div>
         <Layout
           className="transition-all duration-200"
           style={{
-            marginLeft: collapsed ? 80 : 180, // match sider width
-            marginTop: 64, // header height
+            marginLeft: 260, // match sider width
+            marginTop: 80, // header height
           }}
         >
           <Content
-            className="p-6 bg-white dark:bg-gray-900 h-[calc(100vh-64px)] overflow-y-auto transition-colors duration-300"
+            className="p-8 bg-white dark:bg-gray-900 h-[calc(100vh-80px)] overflow-y-auto transition-colors duration-300"
             style={{
               backgroundColor: theme === "dark" ? "#0a0a0a" : "#ffffff",
               color: theme === "dark" ? "#D0D5DB" : "#0a0a0a",

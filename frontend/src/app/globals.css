@@ -10,6 +10,14 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  
+  --color-primary: #0033a0;
+  --color-primary-dark: #00287a;
+  --color-primary-btn: #143477;
+  --color-primary-btn-hover: #0f265e;
+  --color-sidebar-bg: #f8f9fa;
+  --color-sidebar-active: #ebf0fc;
+  --color-sidebar-border: #bed2fa;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -34,22 +42,4 @@ body {
 .dark body {
   background: var(--background);
   color: var(--foreground);
-}
-
-.ant-layout-header {
-  background-color: #e0ecf7;
-}
-
-.dark .ant-layout-header {
-  background-color: #1f2937;
-}
-
-.ant-layout-sider, .ant-menu {
-  background-color: #e0ecf7;
-  height: 90vh;
-}
-
-.dark .ant-layout-sider,
-.dark .ant-menu {
-  background-color: #1f2937;
 }
