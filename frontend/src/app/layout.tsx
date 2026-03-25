@@ -4,7 +4,6 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { ReduxProvider } from "@/components/providers/ReduxProvider";
 import LayoutPage from "@/components/layout/page";
-import LandingPage from "./landing";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +32,7 @@ export default function RootLayout({
       >
         <ReduxProvider>
           <ThemeProvider>
-            <LandingPage>{children}</LandingPage>
+            <LayoutPage>{children}</LayoutPage>
           </ThemeProvider>
         </ReduxProvider>
       </body>

@@ -1,6 +1,6 @@
 import { combineReducers } from "redux";
 import { handleActions } from "redux-actions";
-import { getUsers, createUser, updateUser, deleteUser } from "./actions";
+import { getUsers } from "./actions";
 
 const initialState = {
   loading: true,
@@ -39,12 +39,6 @@ const getLoading = (type: any) =>
 const codifyReducer = combineReducers({
   getUsers: createReducer(getUsers),
   getUsersLoading: getLoading(getUsers),
-  createUser: createReducer(createUser),
-  createUserLoading: getLoading(createUser),
-  updateUser: createReducer(updateUser),
-  updateUserLoading: getLoading(updateUser),
-  deleteUser: createReducer(deleteUser),
-  deleteUserLoading: getLoading(deleteUser),
 });
 
 export default codifyReducer;
