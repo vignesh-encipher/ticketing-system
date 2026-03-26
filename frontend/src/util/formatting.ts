@@ -44,3 +44,9 @@ export const getResponsePopup = (res: any, duration = 1) => {
       return notification.warning({ message: title, description, duration });
   }
 };
+
+export const getRoles = [
+  { value: "LEAD", label: "Lead" },
+  { value: "ADMIN", label: "Admin" },
+  { value: "EDITOR", label: "Editor" },
+];

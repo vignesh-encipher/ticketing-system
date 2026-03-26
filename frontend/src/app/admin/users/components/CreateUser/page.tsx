@@ -16,7 +16,7 @@ import { IoChevronDownOutline } from "react-icons/io5";
 import { connect } from "react-redux";
 import { actions as usersActions } from "@/state/users";
 import UsersState from "@/state/users/model";
-import { getResponsePopup } from "@/util/formatting";
+import { getResponsePopup, getRoles } from "@/util/formatting";
 
 interface CreateUserProps {
   isOpen: boolean;
@@ -307,12 +307,7 @@ const CreateUser = ({
                 >
                   <Select
                     placeholder="Select Role"
-                    options={[
-                      { value: "Member", label: "Member" },
-                      { value: "Lead", label: "Lead" },
-                      { value: "Admin", label: "Admin" },
-                      { value: "Editor", label: "Editor" },
-                    ]}
+                    options={getRoles}
                     className="w-full [&_.ant-select-selector]:!bg-[#e8effc] [&_.ant-select-selector]:!border-transparent hover:[&_.ant-select-selector]:!border-[#0033a0] focus:[&_.ant-select-selector]:!border-[#0033a0] [&_.ant-select-selector]:!rounded-lg [&_.ant-select-selector]:!h-[46px] [&_.ant-select-selection-item]:leading-[44px] text-gray-800 text-[14px] font-bold shadow-none"
                     suffixIcon={
                       <IoChevronDownOutline className="text-gray-500 text-lg" />

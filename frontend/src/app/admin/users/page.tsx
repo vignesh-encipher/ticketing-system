@@ -16,31 +16,21 @@ import { connect } from "react-redux";
 import { actions as usersActions } from "@/state/users";
 import UsersState from "@/state/users/model";
 import { Switch } from "antd";
-import { getResponsePopup } from "@/util/formatting";
+import { getResponsePopup, getRoles } from "@/util/formatting";
 
-const filterItems: FilterItemDef[] = [
+const filterItem: FilterItemDef[] = [
   {
     type: "select",
     name: "department",
     title: "DEPT",
-    options: [
-      { value: "All Departments", label: "All Departments" },
-      { value: "Design", label: "Design" },
-      { value: "Developers", label: "Developers" },
-      { value: "Medical Coders", label: "Medical Coders" },
-      { value: "HR", label: "HR" },
-    ],
+    options: [],
     active: true,
   },
   {
     type: "select",
     name: "role",
     title: "ROLE",
-    options: [
-      { value: "All Roles", label: "All Roles" },
-      { value: "Lead", label: "Lead" },
-      { value: "Member", label: "Member" },
-    ],
+    options: [{ value: "All Roles", label: "All Roles" }, ...getRoles],
     active: true,
   },
   {
@@ -50,7 +40,7 @@ const filterItems: FilterItemDef[] = [
     options: [
       { value: "Any Status", label: "Any Status" },
       { value: "Active", label: "Active" },
-      { value: "Deactivated", label: "Deactivated" },
+      { value: "Inactive", label: "Inactive" },
     ],
     active: true,
   },
@@ -62,11 +52,20 @@ interface UsersPageProps {
   getUsersDataLoad?: boolean;
   getDepartments: () => Promise<any>;
   updateStatusUser: (params: any) => Promise<any>;
+  departmentsData: any;
 }
 
-const UsersPage = ({ getUsers, getUsersData, getUsersDataLoad, getDepartments, updateStatusUser }: UsersPageProps) => {
+const UsersPage = ({
+  getUsers,
+  getUsersData,
+  getUsersDataLoad,
+  getDepartments,
+  updateStatusUser,
+  departmentsData,
+}: UsersPageProps) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({});
+  const [filterItems, setFilterItems] = useState(filterItem);
   const [tableParams, setTableParams] = useState({
     page: 1,
     limit: 10,
@@ -76,93 +75,122 @@ const UsersPage = ({ getUsers, getUsersData, getUsersDataLoad, getDepartments, u
   });
 
   const columns: ColumnsType<any> = [
-  {
-    title: "USER PROFILE",
-    key: "profile",
-    render: (_, record) => {
-      // Create initials from name dynamically
-      const initials = record.name ? record.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
-      const avatarColor = "bg-blue-900"; // fallback color
-      return (
-        <div className="flex items-center gap-4 py-1">
-          {record.profileImage ? 
-            <img src={record.profileImage} alt="avatar" className="w-[42px] h-[42px] rounded-md" />
-           : (
-            <div
-              className={`w-[42px] h-[42px] rounded-md flex items-center justify-center font-bold text-white text-sm shadow-sm ${avatarColor}`}
-            >
-              {initials}
+    {
+      title: "USER PROFILE",
+      key: "profile",
+      render: (_, record) => {
+        // Create initials from name dynamically
+        const initials = record.name
+          ? record.name
+              .split(" ")
+              .map((n: string) => n[0])
+              .join("")
+              .substring(0, 2)
+              .toUpperCase()
+          : "U";
+        const avatarColor = "bg-blue-900"; // fallback color
+        return (
+          <div className="flex items-center gap-4 py-1">
+            {record.profileImage ? (
+              <img
+                src={record.profileImage}
+                alt="avatar"
+                className="w-[42px] h-[42px] rounded-md"
+              />
+            ) : (
+              <div
+                className={`w-[42px] h-[42px] rounded-md flex items-center justify-center font-bold text-white text-sm shadow-sm ${avatarColor}`}
+              >
+                {initials}
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="text-gray-900 font-bold text-sm tracking-tight truncate max-w-[150px]">
+                {record.name}
+              </span>
+              <span className="text-gray-500 text-xs font-semibold truncate max-w-[150px]">
+                {record.email}
+              </span>
             </div>
-          )}
-          <div className="flex flex-col">
-            <span className="text-gray-900 font-bold text-sm tracking-tight truncate max-w-[150px]">
-              {record.name}
-            </span>
-            <span className="text-gray-500 text-xs font-semibold truncate max-w-[150px]">
-              {record.email}
-            </span>
           </div>
-        </div>
-      );
+        );
+      },
     },
-  },
-  {
-    title: "EMPLOYEE ID",
-    dataIndex: "employeeId",
-    key: "employeeId",
-    render: (text: string) => (
-      <span className="text-sm font-bold text-gray-700">{text}</span>
-    ),
-  },
-  {
-    title: "DEPARTMENT",
-    dataIndex: ["department", "name"],
-    key: "department",
-    render: (text: string) => (
-      <span className="text-sm font-bold text-gray-800 whitespace-pre-line leading-tight block">
-        {text || "N/A"}
-      </span>
-    ),
-  },
-  {
-    title: "ROLE",
-    dataIndex: "roleType",
-    key: "roleType",
-    render: (text: string) => (
-      <span className="bg-[#ebf0fc] text-[#0033a0] text-[10px] font-black tracking-wider px-3 py-1.5 rounded-full uppercase">
-        {text || "MEMBER"}
-      </span>
-    ),
-  },
-  {
-    title: "STATUS",
-    dataIndex: "status",
-    key: "status",
-    render: (text: string, record: any) => {
-      return <Switch
-        checked={text?.toLowerCase() === "active"}
-        onChange={(checked) => {
-          handleUpdateStatusUser({ id: record._id, status: checked ? "Active" : "Inactive" });
-        }}
-      />
-    }
-  },
-  {
-    title: "CREATED DATE",
-    dataIndex: "createdAt",
-    key: "createdAt",
-    render: (text: string) => {
-      const date = new Date(text || Date.now());
-      return (
-        <span className="text-sm font-bold text-gray-700 whitespace-pre-line text-[13px] leading-tight block">
-          {date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+    {
+      title: "EMPLOYEE ID",
+      dataIndex: "employeeId",
+      key: "employeeId",
+      render: (text: string) => (
+        <span className="text-sm font-bold text-gray-700">{text}</span>
+      ),
+    },
+    {
+      title: "DEPARTMENT",
+      dataIndex: ["department", "name"],
+      key: "department",
+      render: (text: string) => (
+        <span className="text-sm font-bold text-gray-800 whitespace-pre-line leading-tight block">
+          {text || "N/A"}
         </span>
-      );
+      ),
     },
-  },
-];
-
-
+    {
+      title: "ROLE",
+      dataIndex: "roleType",
+      key: "roleType",
+      render: (text: string) => (
+        <span className="bg-[#ebf0fc] text-[#0033a0] text-[10px] font-black tracking-wider px-3 py-1.5 rounded-full uppercase">
+          {text || "MEMBER"}
+        </span>
+      ),
+    },
+    {
+      title: "STATUS",
+      dataIndex: "status",
+      key: "status",
+      render: (text: string, record: any) => {
+        return (
+          <Switch
+            checked={text?.toLowerCase() === "active"}
+            onChange={(checked) => {
+              handleUpdateStatusUser({
+                id: record._id,
+                status: checked ? "Active" : "Inactive",
+              });
+            }}
+          />
+        );
+      },
+    },
+    {
+      title: "CREATED DATE",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (text: string) => {
+        const date = new Date(text || Date.now());
+        return (
+          <span className="text-sm font-bold text-gray-700 whitespace-pre-line text-[13px] leading-tight block">
+            {date.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
+        );
+      },
+    },
+    {
+      title: "ACTIONS",
+      key: "actions",
+      align: "center",
+      width: 100,
+      render: () => (
+        <button className="text-gray-400 hover:text-gray-600 transition-colors">
+          <AiOutlineMore className="text-2xl" />
+        </button>
+      ),
+    },
+  ];
 
   const getUsersListApi = async () => {
     try {
@@ -171,8 +199,14 @@ const UsersPage = ({ getUsers, getUsersData, getUsersDataLoad, getDepartments, u
     } catch (error) {
       return error;
     }
-  } 
-   const handleUpdateStatusUser = async ({id, status}: {id: string, status: string}) => {
+  };
+  const handleUpdateStatusUser = async ({
+    id,
+    status,
+  }: {
+    id: string;
+    status: string;
+  }) => {
     try {
       const res = await updateStatusUser({ id, status });
       if (res.status == "SUCCESS") {
@@ -183,16 +217,38 @@ const UsersPage = ({ getUsers, getUsersData, getUsersDataLoad, getDepartments, u
     } catch (error) {
       getResponsePopup(error);
     }
-  }
+  };
 
   useEffect(() => {
-    getDepartments()
-  }, [])
-
+    getDepartments();
+  }, []);
 
   useEffect(() => {
     getUsersListApi();
   }, [tableParams, getUsers]);
+
+  useEffect(() => {
+    if (departmentsData?.status == "SUCCESS") {
+      const deptOptions = departmentsData?.response?.departments?.map((d: any) => ({
+        value: d.name,
+        label: d.name,
+      }));
+      const data = filterItems.map((item: any) => {
+        if (item.name === "department") {
+          return {
+            ...item,
+            options: [
+              { value: "All Departments", label: "All Departments" },
+              ...deptOptions,
+            ],
+          };
+        }
+        return item;
+      });
+      console.log(data, departmentsData?.response?.departments,"datas");
+      setFilterItems(data);
+    }
+  }, [departmentsData]);
 
   const handleTableChange = (pagination: any, filters: any, sorter: any) => {
     setTableParams({
@@ -251,7 +307,9 @@ const UsersPage = ({ getUsers, getUsersData, getUsersDataLoad, getDepartments, u
             <h3 className="text-[#006056] font-extrabold tracking-widest text-[12px] mb-0.5 opacity-90">
               TOTAL USERS
             </h3>
-            <div className="text-[#006056] font-black text-4xl">{totalCount.toLocaleString()}</div>
+            <div className="text-[#006056] font-black text-4xl">
+              {totalCount.toLocaleString()}
+            </div>
           </div>
           <div className="absolute right-6 top-1/2 -translate-y-1/2 w-[60px] h-[60px] bg-[#54d4b3]/60 rounded-full flex items-center justify-center shadow-inner">
             <AiOutlineTeam className="text-[#006056] text-3xl opacity-80" />
@@ -279,7 +337,9 @@ const UsersPage = ({ getUsers, getUsersData, getUsersDataLoad, getDepartments, u
                     {range[0]}-{range[1]}
                   </strong>
                   &nbsp;of&nbsp;
-                  <strong className="text-gray-900 font-black">{total.toLocaleString()}</strong>
+                  <strong className="text-gray-900 font-black">
+                    {total.toLocaleString()}
+                  </strong>
                   &nbsp;users
                 </span>
               ),
@@ -304,12 +364,13 @@ const enhancer = connect(
   (state: { users: UsersState }) => ({
     getUsersData: state.users.getUsers.data,
     getUsersDataLoad: state.users.getUsersLoading,
+    departmentsData: state.users.getDepartments.data,
   }),
   {
     getUsers: usersActions.getUsers,
     updateStatusUser: usersActions.updateStatusUser,
     getDepartments: usersActions.getDepartments,
-  }
+  },
 );
 
 export default enhancer(UsersPage);
