@@ -46,7 +46,7 @@ export const getResponsePopup = (res: any, duration = 1) => {
 };
 
 export const getRoles = [
-  { value: "LEAD", label: "Lead" },
-  { value: "ADMIN", label: "Admin" },
-  { value: "EDITOR", label: "Editor" },
+  { value: "Lead", label: "Lead" },
+  { value: "Admin", label: "Admin" },
+  { value: "Member", label: "Member" },
 ];

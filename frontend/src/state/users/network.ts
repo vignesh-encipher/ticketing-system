@@ -6,16 +6,22 @@ interface GetUsersParams {
   search?: string;
   sortByField?: string;
   sortByType?: 'asc' | 'desc';
+  department?: string;
+  roleType?: string;
+  status?: string;
 }
 
-export async function getUsers(params?: GetUsersParams) {
-  const { page = 0, limit = 10, search = "", sortByField = "", sortByType = "" } = params || {};
+export async function getUsers(params?: any) {
+  const { page = 0, limit = 10, search = "", sortByField = "", sortByType = "", department = "", roleType = "", status = "", role = "" } = params || {};
+  console.log(params);
   const options = {
     method: "GET",
   };
 
+  const actualRoleType = role || roleType;
+
   const data = await requestPortal(
-    `users?page=${page}&limit=${limit}&search=${search}&sortByField=${sortByField}&sortByType=${sortByType}`,
+    `users?page=${page}&limit=${limit}&search=${search}&sortByField=${sortByField}&sortByType=${sortByType}&department=${department}&roleType=${actualRoleType}&status=${status}`,
     options
   );
 

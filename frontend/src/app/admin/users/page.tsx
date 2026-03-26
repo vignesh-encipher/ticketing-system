@@ -64,7 +64,7 @@ const UsersPage = ({
   departmentsData,
 }: UsersPageProps) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState({});
+  const [selectedFilters, setSelectedFilters] = useState<any>({});
   const [filterItems, setFilterItems] = useState(filterItem);
   const [tableParams, setTableParams] = useState({
     page: 1,
@@ -194,7 +194,7 @@ const UsersPage = ({
 
   const getUsersListApi = async () => {
     try {
-      const res = await getUsers({ ...tableParams });
+      const res = await getUsers({ ...tableParams, ...selectedFilters });
       return res;
     } catch (error) {
       return error;
@@ -225,7 +225,7 @@ const UsersPage = ({
 
   useEffect(() => {
     getUsersListApi();
-  }, [tableParams, getUsers]);
+  }, [tableParams, getUsers, selectedFilters]);
 
   useEffect(() => {
     if (departmentsData?.status == "SUCCESS") {

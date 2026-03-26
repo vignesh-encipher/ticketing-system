@@ -2,7 +2,7 @@ const User = require('../models/User');
 
 class UserService {
   async getAllUsers(pagination) {
-    const { skip, limit, page, search, sort } = pagination;
+    const { skip, limit, page, search, sort, department, roleType, status } = pagination;
     
     // Build query object
     const query = {};
@@ -12,6 +12,24 @@ class UserService {
         { email: { $regex: search, $options: 'i' } },
         { employeeId: { $regex: search, $options: 'i' } }
       ];
+    }
+
+    if (roleType && roleType !== 'All Roles') {
+      query.roleType = { $regex: new RegExp('^' + roleType + '$', 'i') };
+    }
+
+    if (status && status !== 'Any Status') {
+      query.status = { $regex: new RegExp('^' + status + '$', 'i') };
+    }
+
+    if (department && department !== 'All Departments') {
+      const Department = require('../models/Department');
+      const deptDoc = await Department.findOne({ name: { $regex: new RegExp('^' + department + '$', 'i') } });
+      if (deptDoc) {
+        query.department = deptDoc._id;
+      } else {
+        query.department = null; 
+      }
     }
 
     const users = await User.find(query)
