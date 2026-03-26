@@ -124,9 +124,9 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({
               Description
             </span>
           }
-        >
-          <div className="border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 ring-blue-100 ring-offset-0 transition-all">
-            {/* Toolbar */}
+        >    {/* Toolbar */}
+          {/* <div className="border border-slate-200 rounded-lg overflow-hidden focus-within:ring-2 ring-blue-100 ring-offset-0 transition-all">
+        
             <div className="flex gap-4 p-3 bg-blue-50/50 border-b border-slate-200 text-slate-500">
               <BoldOutlined className="cursor-pointer hover:text-blue-600" />
               <ItalicOutlined className="cursor-pointer hover:text-blue-600" />
@@ -139,7 +139,11 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({
               className="p-4 bg-white"
               placeholder="Provide detailed context, requirements, and desired outcomes..."
             />
-          </div>
+          </div> */}
+          <TicketEditor 
+          onChange={(html) => setTicketData(prev => ({ ...prev, htmlContent: html }))}
+          onFilesChange={(files) => setTicketData(prev => ({ ...prev, attachments: files }))}
+        />
         </Form.Item>
 
         {/* Attachments Section */}
@@ -171,12 +175,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({
             </p>
           </Dragger>
         </Form.Item>
-
-
-        <TicketEditor 
-          onChange={(html) => setTicketData(prev => ({ ...prev, htmlContent: html }))}
-          onFilesChange={(files) => setTicketData(prev => ({ ...prev, attachments: files }))}
-        />
 
         {/* Actions */}
         <div className="flex justify-end items-center gap-6 mt-12">
