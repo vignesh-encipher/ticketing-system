@@ -1,75 +1,74 @@
-const asyncHandler = require('express-async-handler');
-const User = require('../models/User');
+const userService = require('../services/userService');
+const { sendResponse } = require('../utils/responseHelper');
 
-// @desc    Get all users
-// @route   GET /api/users
-// @access  Private/Admin
-const getUsers = asyncHandler(async (req, res) => {
-    const users = await User.find({}).select('-password');
-    res.json(users);
-});
-
-// @desc    Get user by ID
-// @route   GET /api/users/:id
-// @access  Private
-const getUserById = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.params.id).select('-password');
-    if (user) {
-        res.json(user);
-    } else {
-        res.status(404);
-        throw new Error('User not found');
+class UserController {
+  async getAllUsers(req, res, next) {
+    try {
+      const result = await userService.getAllUsers(req.pagination);
+      return sendResponse(res, 200, 'SUCCESS', 'Users retrieved successfully', result);
+    } catch (error) {
+      next(error);
     }
-});
+  }
 
-// @desc    Update user
-// @route   PUT /api/users/:id
-// @access  Private/Admin
-const updateUser = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.params.id);
+  async createUser(req, res, next) {
+    try {
+      const { name, email, employeeId, department, roleType, profileImage } = req.body;
+      
+      if (!name || !email || !employeeId || !department || !roleType) {
+        return sendResponse(res, 400, 'FAILED', 'name, email, employeeId, department, and roleType are required');
+      }
 
-    if (user) {
-        user.name = req.body.name || user.name;
-        user.dateOfBirth = req.body.dateOfBirth || user.dateOfBirth;
-        user.email = req.body.email || user.email;
-        user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
-        user.role = req.body.role || user.role;
+      // Basic validation for email and employeeId uniqueness
+      const [existingEmail, existingEmpId] = await Promise.all([
+        userService.findByEmail(email),
+        userService.findByEmployeeId(employeeId)
+      ]);
 
-        if (req.body.password) {
-            user.password = req.body.password;
-        }
-
-        const updatedUser = await user.save();
-        res.json({
-            _id: updatedUser._id,
-            name: updatedUser.name,
-            email: updatedUser.email,
-            role: updatedUser.role,
-        });
-    } else {
-        res.status(404);
-        throw new Error('User not found');
+      if (existingEmail) return sendResponse(res, 400, 'FAILED', 'Email already exists');
+      if (existingEmpId) return sendResponse(res, 400, 'FAILED', 'Employee ID already exists');
+      
+      const newUser = await userService.createUser({ name, email, employeeId, department, roleType, profileImage });
+      return sendResponse(res, 201, 'SUCCESS', 'User created successfully', newUser);
+    } catch (error) {
+      if (error.name === 'ValidationError') {
+        return sendResponse(res, 400, 'FAILED', Object.values(error.errors).map(v => v.message).join(', '));
+      }
+      next(error);
     }
-});
+  }
 
-// @desc    Delete user
-// @route   DELETE /api/users/:id
-// @access  Private/Admin
-const deleteUser = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.params.id);
-
-    if (user) {
-        await User.deleteOne({ _id: user._id });
-        res.json({ message: 'User removed' });
-    } else {
-        res.status(404);
-        throw new Error('User not found');
+  async updateUser(req, res, next) {
+    try {
+      const updatedUser = await userService.updateUser(req.params.id, req.body);
+      if (!updatedUser) {
+        return sendResponse(res, 404, 'FAILED', 'User not found');
+      }
+      
+      return sendResponse(res, 200, 'SUCCESS', 'User updated successfully', updatedUser);
+    } catch (error) {
+      if (error.name === 'ValidationError') {
+        return sendResponse(res, 400, 'FAILED', Object.values(error.errors).map(v => v.message).join(', '));
+      }
+      if (error.code === 11000) {
+        return sendResponse(res, 400, 'FAILED', 'Unique field (Email or Employee ID) already exists');
+      }
+      next(error);
     }
-});
+  }
 
-module.exports = {
-    getUsers,
-    getUserById,
-    updateUser,
-    deleteUser
-};
+  async deleteUser(req, res, next) {
+    try {
+      const deletedUser = await userService.softDeleteUser(req.params.id);
+      if (!deletedUser) {
+        return sendResponse(res, 404, 'FAILED', 'User not found');
+      }
+      
+      return sendResponse(res, 200, 'SUCCESS', 'User deleted successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+module.exports = new UserController();

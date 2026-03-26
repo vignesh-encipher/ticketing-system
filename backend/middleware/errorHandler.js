@@ -1,10 +1,18 @@
+const { sendResponse } = require('../utils/responseHelper');
+
+/**
+ * Global Error Handler Middleware
+ */
 const errorHandler = (err, req, res, next) => {
-    const statusCode = res.statusCode ? res.statusCode : 500;
-    res.status(statusCode);
-    res.json({
-        message: err.message,
-        stack: process.env.NODE_ENV === 'production' ? null : err.stack,
-    });
+  console.error(err.stack);
+  
+  sendResponse(
+    res, 
+    500, 
+    'EXCEPTION', 
+    err.message || 'An unexpected error occurred',
+    null
+  );
 };
 
-module.exports = { errorHandler };
+module.exports = errorHandler;

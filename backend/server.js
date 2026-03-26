@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const { errorHandler } = require('./middleware/errorHandler');
+const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
@@ -13,6 +13,7 @@ app.use(cors({ origin: ['http://localhost:3000', 'http://127.0.0.1:3000'], crede
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/departments', require('./routes/departmentRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
 app.use('/api/tickets', require('./routes/ticketRoutes'));
 
@@ -27,6 +28,7 @@ mongoose.connect(process.env.MONGO_URI).then(async () => {
     
     // Default User Seed
     try {
+        /*
         const adminExists = await User.findOne({ email: 'admin@test.com' });
         if (!adminExists) {
             await User.create({
@@ -39,6 +41,7 @@ mongoose.connect(process.env.MONGO_URI).then(async () => {
             });
             console.log('Default Admin user seeded');
         }
+        */
     } catch (err) {
         console.error('Failed to seed admin', err);
     }

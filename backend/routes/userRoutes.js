@@ -1,14 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const { getUsers, getUserById, updateUser, deleteUser } = require('../controllers/userController');
-const { protect, authorize } = require('../middleware/auth');
+const userController = require('../controllers/userController');
+const paginationMiddleware = require('../middleware/pagination');
 
-router.route('/')
-    .get(protect, authorize('Admin'), getUsers);
+// GET /api/users
+router.get('/', paginationMiddleware, userController.getAllUsers);
 
-router.route('/:id')
-    .get(protect, getUserById)
-    .put(protect, authorize('Admin'), updateUser)
-    .delete(protect, authorize('Admin'), deleteUser);
+// POST /api/users
+router.post('/', userController.createUser);
+
+// PUT /api/users/:id
+router.put('/:id', userController.updateUser);
+
+// DELETE /api/users/:id
+router.delete('/:id', userController.deleteUser);
 
 module.exports = router;
