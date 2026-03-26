@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import TableComponent from "../../../components/table/TableComponent";
 import Filters from "../../../components/filter";
@@ -9,161 +9,13 @@ import type { ColumnsType } from "antd/es/table";
 import { AiOutlineMore } from "react-icons/ai";
 import { getPriority, getStatus } from "@/util/shared-functions";
 import { useRouter } from "next/navigation";
+import { getTickets } from "@/state/tickets/actions";
+import { exactData } from "@/util/formatting";
+import { connect } from "react-redux";
+import TicketsState from "@/state/tickets/model";
+import { actions as ticketsActions } from "@/state/tickets";
 
-// Mock data based on the provided image
-const tickets = [
-  {
-    key: "1",
-    id: "#TK-9021",
-    title: "API Gateway Latency Spike",
-    created: "Created 2h ago",
-    sourceDept: "Medical Coders",
-    targetDept: "IT",
-    priority: "CRITICAL",
-    status: "Open",
-    assigneeName: "Julian Dash",
-    assigneeAvatar: "https://i.pravatar.cc/150?u=julian",
-  },
-  {
-    key: "2",
-    id: "#TK-8842",
-    title: "Campaign Asset Approval",
-    created: "Created 5h ago",
-    sourceDept: "Marketing",
-    targetDept: "Design",
-    priority: "MEDIUM",
-    status: "In Progress",
-    assigneeName: "Sara Chen",
-    assigneeAvatar: "https://i.pravatar.cc/150?u=sara",
-  },
-  {
-    key: "3",
-    id: "#TK-8710",
-    title: "Q4 Payroll Discrepancy",
-    created: "Created 1d ago",
-    sourceDept: "HR",
-    targetDept: "IT",
-    priority: "HIGH",
-    status: "Resolved",
-    assigneeName: "Marcus K.",
-    assigneeAvatar: "https://i.pravatar.cc/150?u=marcus",
-  },
-  {
-    key: "4",
-    id: "#TK-8655",
-    title: "DB Schema Migration",
-    created: "Created 2d ago",
-    sourceDept: "Developers",
-    targetDept: "IT",
-    priority: "LOW",
-    status: "Closed",
-    assigneeName: "Tasha R.",
-    assigneeAvatar: "https://i.pravatar.cc/150?u=tasha",
-  },
-  {
-    key: "5",
-    id: "#TK-8511",
-    title: "New Hire Onboarding Pack",
-    created: "Created 3d ago",
-    sourceDept: "Design",
-    targetDept: "HR",
-    priority: "MEDIUM",
-    status: "In Progress",
-    assigneeName: "Elena Lopez",
-    assigneeAvatar: "https://i.pravatar.cc/150?u=elena",
-  },
-];
-
-const columns: ColumnsType<(typeof tickets)[0]> = [
-  {
-    title: "TICKET ID",
-    dataIndex: "id",
-    key: "id",
-    width: 120,
-    render: (text) => (
-      <span className="text-[#143477] font-bold text-[13px]">{text}</span>
-    ),
-  },
-  {
-    title: "TITLE",
-    key: "title",
-    width: 200,
-    render: (_, record) => (
-      <div className="flex flex-col py-1">
-        <span className="text-gray-900 font-extrabold text-[14px] whitespace-pre-line leading-tight">
-          {record.title}
-        </span>
-        <span className="text-gray-500 text-[11px] font-semibold mt-1">
-          {record.created}
-        </span>
-      </div>
-    ),
-  },
-  {
-    title: "SOURCE DEPT",
-    dataIndex: "sourceDept",
-    key: "sourceDept",
-    width: 140,
-    render: (text) => (
-      <span className="text-gray-700 font-semibold text-[14px] whitespace-pre-line leading-tight">
-        {text}
-      </span>
-    ),
-  },
-  {
-    title: "TARGET DEPT",
-    dataIndex: "targetDept",
-    key: "targetDept",
-    width: 140,
-    render: (text) => (
-      <span className="text-gray-700 font-semibold text-[14px]">{text}</span>
-    ),
-  },
-  {
-    title: "PRIORITY",
-    dataIndex: "priority",
-    key: "priority",
-    width: 120,
-    render: (text) => getPriority(text),
-  },
-  {
-    title: "STATUS",
-    dataIndex: "status",
-    key: "status",
-    width: 140,
-    render: (text) => getStatus(text),
-  },
-  {
-    title: "ASSIGNED TO",
-    key: "assignedTo",
-    width: 160,
-    render: (_, record) => (
-      <div className="flex items-center gap-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={record.assigneeAvatar}
-          alt={record.assigneeName}
-          className="w-8 h-8 rounded-full object-cover shadow-sm bg-gray-100"
-        />
-        <span className="text-gray-800 font-semibold text-[13px] leading-tight whitespace-pre-line">
-          {record.assigneeName}
-        </span>
-      </div>
-    ),
-  },
-  {
-    title: "",
-    key: "actions",
-    align: "right",
-    width: 50,
-    render: () => (
-      <button className="text-gray-400 hover:text-[#143477] transition-colors p-1">
-        <AiOutlineMore className="text-2xl" />
-      </button>
-    ),
-  },
-];
-
+// Filter configuration matching backend
 const filterItems = [
   {
     type: "select" as const,
@@ -171,10 +23,12 @@ const filterItems = [
     title: "DEPARTMENT",
     options: [
       { value: "All Departments", label: "All Departments" },
+      { value: "Engineering", label: "Engineering" },
       { value: "Medical Coders", label: "Medical Coders" },
       { value: "Marketing", label: "Marketing" },
       { value: "HR", label: "HR" },
       { value: "Developers", label: "Developers" },
+      { value: "IT", label: "IT" },
     ],
     active: true,
   },
@@ -206,14 +60,174 @@ const filterItems = [
   },
 ];
 
-const TicketsPage = () => {
+interface TicketsPageProps {
+  getTickets: (params: any) => Promise<any>;
+  getTicketsData: any;
+  getTicketsDataLoad?: boolean;
+}
+
+const TicketsPage = ({
+  getTickets,
+  getTicketsData,
+  getTicketsDataLoad,
+}: TicketsPageProps) => {
   const router = useRouter();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({});
+  const [tableParams, setTableParams] = useState({
+    page: 1,
+    limit: 10,
+    search: "",
+  });
+
+ 
+
+  // Handle table pagination manually
+  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+    setTableParams((prev) => ({
+      ...prev,
+      page: pagination.current,
+      limit: pagination.pageSize,
+    }));
+  };
+
+  const columns: ColumnsType<any> = [
+    {
+      title: "TICKET ID",
+      dataIndex: "ticketId",
+      key: "ticketId",
+      width: 120,
+      render: (text) => (
+        <span className="text-[#143477] font-bold text-[13px]">{text}</span>
+      ),
+    },
+    {
+      title: "TITLE",
+      key: "title",
+      width: 200,
+      render: (_, record) => (
+        <div className="flex flex-col py-1">
+          <span className="text-gray-900 font-extrabold text-[14px] whitespace-pre-line leading-tight">
+            {record.title}
+          </span>
+          <span className="text-gray-500 text-[11px] font-semibold mt-1">
+            Created {exactData(record.createdAt)}
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: "SOURCE DEPT",
+      dataIndex: "sourceDept",
+      key: "sourceDept",
+      width: 140,
+      render: (text) => (
+        <span className="text-gray-700 font-semibold text-[14px] whitespace-pre-line leading-tight">
+          {text || "-"}
+        </span>
+      ),
+    },
+    {
+      title: "TARGET DEPT",
+      dataIndex: "targetDept",
+      key: "targetDept",
+      width: 140,
+      render: (text) => (
+        <span className="text-gray-700 font-semibold text-[14px]">{text || "-"}</span>
+      ),
+    },
+    {
+      title: "PRIORITY",
+      dataIndex: "priority",
+      key: "priority",
+      width: 120,
+      render: (text) => getPriority(text),
+    },
+    {
+      title: "STATUS",
+      dataIndex: "status",
+      key: "status",
+      width: 140,
+      render: (text) => getStatus(text),
+    },
+    {
+      title: "ASSIGNED TO",
+      key: "assignee",
+      width: 160,
+      render: (_, record) => (
+        <div className="flex items-center gap-3">
+          {record.assignee?.profileImage ? (
+            <img
+              src={record.assignee.profileImage}
+              alt={record.assignee?.name || "Assignee"}
+              className="w-8 h-8 rounded-full object-cover shadow-sm bg-gray-100"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full shadow-sm bg-gray-100 flex items-center justify-center font-bold text-gray-400">
+              {record.assignee?.name ? record.assignee.name.charAt(0) : "?"}
+            </div>
+          )}
+          <span className="text-gray-800 font-semibold text-[13px] leading-tight whitespace-pre-line">
+            {record.assignee?.name || "Unassigned"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: "Created By",
+      key: "createdBy",
+      width: 160,
+      render: (_, record) => (
+        <div className="flex items-center gap-3">
+          {record.createdBy?.profileImage ? (
+            <img
+              src={record.createdBy.profileImage}
+              alt={record.createdBy?.name || "Assignee"}
+              className="w-8 h-8 rounded-full object-cover shadow-sm bg-gray-100"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full shadow-sm bg-gray-100 flex items-center justify-center font-bold text-gray-400">
+              {record.createdBy?.name ? record.createdBy.name.charAt(0) : "?"}
+            </div>
+          )}
+          <span className="text-gray-800 font-semibold text-[13px] leading-tight whitespace-pre-line">
+            {record.createdBy?.name || "--"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: "",
+      key: "actions",
+      align: "right",
+      width: 50,
+      render: () => (
+        <button className="text-gray-400 hover:text-[#143477] transition-colors p-1" onClick={(e) => e.stopPropagation()}>
+          <AiOutlineMore className="text-2xl" />
+        </button>
+      ),
+    },
+  ];
+
+  const getTicketsListApi = async () => {
+    try {
+      const res = await getTickets({ ...tableParams, ...selectedFilters });
+      return res;
+    } catch (error) {
+      return error;
+    }
+  };
+
+  useEffect(() => {
+    getTicketsListApi();
+  }, [tableParams, selectedFilters]);
+
+  const totalCount = getTicketsData?.total;
+  const criticalCount = getTicketsData?.tickets?.filter((ticket: any) => ticket.priority === "Critical").length;
+  const ticketsList = getTicketsData?.response?.tickets;
+
   return (
     <div className="h-full flex flex-col pb-12 pt-6">
-        {/* Create Ticket Button */}
-       
       {/* Header Section */}
       <div className="flex justify-between items-start mb-8">
         <div>
@@ -235,18 +249,18 @@ const TicketsPage = () => {
             Create Ticket
           </button>
         </div>
-          <div className="bg-[#f8f9fa] rounded-[16px] py-4 px-6 min-w-[140px] flex flex-col items-center justify-center">
+          {/* <div className="bg-[#f8f9fa] rounded-[16px] py-4 px-6 min-w-[140px] flex flex-col items-center justify-center">
             <span className="text-gray-500 font-extrabold text-[10px] tracking-widest uppercase mb-1">
               TOTAL ACTIVE
             </span>
-            <span className="text-[#143477] text-3xl font-black">1,284</span>
+            <span className="text-[#143477] text-3xl font-black">{totalCount}</span>
           </div>
           <div className="bg-[#f8f9fa] rounded-[16px] py-4 px-6 min-w-[140px] flex flex-col items-center justify-center">
             <span className="text-gray-500 font-extrabold text-[10px] tracking-widest uppercase mb-1">
               CRITICAL
             </span>
-            <span className="text-red-600 text-3xl font-black">12</span>
-          </div>
+            <span className="text-red-600 text-3xl font-black">{criticalCount}</span>
+          </div> */}
         </div>
       </div>
 
@@ -256,23 +270,26 @@ const TicketsPage = () => {
           FilterItems={filterItems}
           selectedOption={selectedFilters}
           setSelectedOption={setSelectedFilters}
-          onApply={() => console.log("Filters Applied:", selectedFilters)}
         />
       </div>
 
       {/* Datatable Section */}
-      <div className="flex-1">
+      <div className="flex-1 border-transparent overflow-hidden custom-users-table">
         <TableComponent
           columns={columns}
-          dataSource={tickets}
+          dataSource={ticketsList}
           rowKey="id"
+          loading={getTicketsDataLoad}
           onRowClick={(record) => {
             console.log("Row clicked:", record);
             router.push(`/admin/tickets/details/${record.id}`);
           }}  
           tableProps={{
+            onChange: handleTableChange,
             pagination: {
-              total: 1284,
+              current: tableParams.page,
+              pageSize: tableParams.limit,
+              total: totalCount,
               showTotal: (total: number, range: [number, number]) => (
                 <span className="text-gray-500 text-[11px] uppercase tracking-widest font-extrabold flex items-center">
                   Showing&nbsp;
@@ -280,8 +297,8 @@ const TicketsPage = () => {
                     {range[0]}-{range[1]}
                   </strong>
                   &nbsp;of&nbsp;
-                  <strong className="text-gray-900 font-black">1,284</strong>
-                  &nbsp;users
+                  <strong className="text-gray-900 font-black">{total}</strong>
+                  &nbsp;tickets
                 </span>
               ),
             },
@@ -298,4 +315,14 @@ const TicketsPage = () => {
   );
 };
 
-export default TicketsPage;
+const enhancer = connect(
+  (state: { tickets: TicketsState }) => ({
+    getTicketsData: state.tickets.getTickets.data,
+    getTicketsDataLoad: state.tickets.getTicketsLoading,
+  }),
+  {
+    getTickets: ticketsActions.getTickets,
+  },
+);
+
+export default enhancer(TicketsPage);

@@ -9,6 +9,7 @@ import {
 import type { ThunkMiddleware } from "redux-thunk";
 import { reducer as cardReducer } from "./card";
 import { reducer as usersReducer } from "./users";
+import { reducer as ticketsReducer } from "./tickets";
 
 // Import thunk middleware using require to handle module export issues
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -35,7 +36,8 @@ const promiseMiddleware =
 // ✅ Combine reducers
 const rootReducer = combineReducers({
   card: cardReducer,
-  users: usersReducer
+  users: usersReducer,
+  tickets: ticketsReducer
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
