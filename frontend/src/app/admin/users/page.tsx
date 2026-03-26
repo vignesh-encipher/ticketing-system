@@ -154,7 +154,7 @@ const UsersPage = ({
             checked={text?.toLowerCase() === "active"}
             onChange={(checked) => {
               handleUpdateStatusUser({
-                id: record._id,
+                id: record.id,
                 status: checked ? "Active" : "Inactive",
               });
             }}
@@ -322,7 +322,7 @@ const UsersPage = ({
         <TableComponent
           columns={columns}
           dataSource={usersList}
-          rowKey="_id"
+          rowKey="id"
           loading={getUsersDataLoad}
           tableProps={{
             onChange: handleTableChange,

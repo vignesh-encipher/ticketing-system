@@ -50,6 +50,15 @@ userSchema.pre(/^find/, function() {
   this.where({ isDeleted: { $ne: true } });
 });
 
+userSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: function (doc, ret) {
+    ret.id = ret._id;
+    delete ret._id;
+  }
+});
+
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;

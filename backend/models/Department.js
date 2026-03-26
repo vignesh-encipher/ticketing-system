@@ -19,4 +19,13 @@ departmentSchema.pre(/^find/, function() {
   this.where({ isDeleted: { $ne: true } });
 });
 
+departmentSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: function (doc, ret) {
+    ret.id = ret._id;
+    delete ret._id;
+  }
+});
+
 module.exports = mongoose.model('Department', departmentSchema);

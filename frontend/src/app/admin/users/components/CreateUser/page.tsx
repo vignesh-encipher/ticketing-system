@@ -96,7 +96,7 @@ const CreateUser = ({
 
   const deptList = departmentsData?.response?.departments || [];
   const deptOptions = deptList?.map((d: any) => ({
-    value: d._id,
+    value: d.id,
     label: d.name,
   }));
 
