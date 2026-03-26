@@ -29,6 +29,14 @@ export default class UsersState {
   };
   getUsersLoading: boolean | undefined;
 
+  getDepartments: {
+    data: { response: any[]; status: string; message: string; } | null;
+    error: string | null;
+    loading: boolean;
+  };
+  getDepartmentsLoading: boolean | undefined;
+  createUserLoading: boolean | undefined;
+
   constructor() {
     this.getUsers = {
       data: null,
@@ -36,5 +44,12 @@ export default class UsersState {
       loading: false
     };
     this.getUsersLoading = false;
+    this.getDepartments = {
+      data: null,
+      error: null,
+      loading: false
+    };
+    this.getDepartmentsLoading = false;
+    this.createUserLoading = false;
   }
 }

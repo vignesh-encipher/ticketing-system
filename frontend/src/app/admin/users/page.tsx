@@ -15,8 +15,67 @@ import { getStatus } from "@/util/shared-functions";
 import { connect } from "react-redux";
 import { actions as usersActions } from "@/state/users";
 import UsersState from "@/state/users/model";
+import { Switch } from "antd";
+import { getResponsePopup } from "@/util/formatting";
 
-const columns: ColumnsType<any> = [
+const filterItems: FilterItemDef[] = [
+  {
+    type: "select",
+    name: "department",
+    title: "DEPT",
+    options: [
+      { value: "All Departments", label: "All Departments" },
+      { value: "Design", label: "Design" },
+      { value: "Developers", label: "Developers" },
+      { value: "Medical Coders", label: "Medical Coders" },
+      { value: "HR", label: "HR" },
+    ],
+    active: true,
+  },
+  {
+    type: "select",
+    name: "role",
+    title: "ROLE",
+    options: [
+      { value: "All Roles", label: "All Roles" },
+      { value: "Lead", label: "Lead" },
+      { value: "Member", label: "Member" },
+    ],
+    active: true,
+  },
+  {
+    type: "select",
+    name: "status",
+    title: "STATUS",
+    options: [
+      { value: "Any Status", label: "Any Status" },
+      { value: "Active", label: "Active" },
+      { value: "Deactivated", label: "Deactivated" },
+    ],
+    active: true,
+  },
+];
+
+interface UsersPageProps {
+  getUsers: (params: any) => Promise<any>;
+  getUsersData: any;
+  getUsersDataLoad?: boolean;
+  getDepartments: () => Promise<any>;
+  updateStatusUser: (params: any) => Promise<any>;
+}
+
+const UsersPage = ({ getUsers, getUsersData, getUsersDataLoad, getDepartments, updateStatusUser }: UsersPageProps) => {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState({});
+  const [tableParams, setTableParams] = useState({
+    page: 1,
+    limit: 10,
+    search: "",
+    sortByField: "",
+    sortByType: "",
+  });
+
+  const columns: ColumnsType<any> = [
   {
     title: "USER PROFILE",
     key: "profile",
@@ -26,11 +85,15 @@ const columns: ColumnsType<any> = [
       const avatarColor = "bg-blue-900"; // fallback color
       return (
         <div className="flex items-center gap-4 py-1">
-          <div
-            className={`w-[42px] h-[42px] rounded-md flex items-center justify-center font-bold text-white text-sm shadow-sm ${avatarColor}`}
-          >
-            {initials}
-          </div>
+          {record.profileImage ? 
+            <img src={record.profileImage} alt="avatar" className="w-[42px] h-[42px] rounded-md" />
+           : (
+            <div
+              className={`w-[42px] h-[42px] rounded-md flex items-center justify-center font-bold text-white text-sm shadow-sm ${avatarColor}`}
+            >
+              {initials}
+            </div>
+          )}
           <div className="flex flex-col">
             <span className="text-gray-900 font-bold text-sm tracking-tight truncate max-w-[150px]">
               {record.name}
@@ -75,7 +138,14 @@ const columns: ColumnsType<any> = [
     title: "STATUS",
     dataIndex: "status",
     key: "status",
-    render: (text: string) => getStatus(text),
+    render: (text: string, record: any) => {
+      return <Switch
+        checked={text?.toLowerCase() === "active"}
+        onChange={(checked) => {
+          handleUpdateStatusUser({ id: record._id, status: checked ? "Active" : "Inactive" });
+        }}
+      />
+    }
   },
   {
     title: "CREATED DATE",
@@ -90,77 +160,38 @@ const columns: ColumnsType<any> = [
       );
     },
   },
-  {
-    title: "ACTIONS",
-    key: "actions",
-    align: "center",
-    width: 100,
-    render: () => (
-      <button className="text-gray-400 hover:text-gray-600 transition-colors">
-        <AiOutlineMore className="text-2xl" />
-      </button>
-    ),
-  },
 ];
 
-const filterItems: FilterItemDef[] = [
-  {
-    type: "select",
-    name: "department",
-    title: "DEPT",
-    options: [
-      { value: "All Departments", label: "All Departments" },
-      { value: "Design", label: "Design" },
-      { value: "Developers", label: "Developers" },
-      { value: "Medical Coders", label: "Medical Coders" },
-      { value: "HR", label: "HR" },
-    ],
-    active: true,
-  },
-  {
-    type: "select",
-    name: "role",
-    title: "ROLE",
-    options: [
-      { value: "All Roles", label: "All Roles" },
-      { value: "Lead", label: "Lead" },
-      { value: "Member", label: "Member" },
-    ],
-    active: true,
-  },
-  {
-    type: "select",
-    name: "status",
-    title: "STATUS",
-    options: [
-      { value: "Any Status", label: "Any Status" },
-      { value: "Active", label: "Active" },
-      { value: "Deactivated", label: "Deactivated" },
-    ],
-    active: true,
-  },
-];
 
-interface UsersPageProps {
-  getUsers: (params: any) => Promise<any>;
-  getUsersData: any;
-  getUsersDataLoad?: boolean;
-}
 
-const UsersPage = ({ getUsers, getUsersData, getUsersDataLoad }: UsersPageProps) => {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState({});
-  const [tableParams, setTableParams] = useState({
-    page: 1,
-    limit: 10,
-    search: "",
-    sortByField: "",
-    sortByType: "",
-  });
+  const getUsersListApi = async () => {
+    try {
+      const res = await getUsers({ ...tableParams });
+      return res;
+    } catch (error) {
+      return error;
+    }
+  } 
+   const handleUpdateStatusUser = async ({id, status}: {id: string, status: string}) => {
+    try {
+      const res = await updateStatusUser({ id, status });
+      if (res.status == "SUCCESS") {
+        getResponsePopup(res);
+        getUsersListApi();
+      }
+      getResponsePopup(res);
+    } catch (error) {
+      getResponsePopup(error);
+    }
+  }
 
   useEffect(() => {
-    // We send tableParams along with search/sorting values to Redux action
-    getUsers({ ...tableParams });
+    getDepartments()
+  }, [])
+
+
+  useEffect(() => {
+    getUsersListApi();
   }, [tableParams, getUsers]);
 
   const handleTableChange = (pagination: any, filters: any, sorter: any) => {
@@ -263,6 +294,7 @@ const UsersPage = ({ getUsers, getUsersData, getUsersDataLoad }: UsersPageProps)
       <CreateUser
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
+        onSuccess={() => getUsersListApi()}
       />
     </div>
   );
@@ -275,6 +307,8 @@ const enhancer = connect(
   }),
   {
     getUsers: usersActions.getUsers,
+    updateStatusUser: usersActions.updateStatusUser,
+    getDepartments: usersActions.getDepartments,
   }
 );
 
