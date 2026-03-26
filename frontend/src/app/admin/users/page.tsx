@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import CreateUser from "./components/CreateUser/page";
 import { TableComponent } from "../../../components/table";
 import type { ColumnsType } from "../../../components/table";
@@ -8,112 +8,66 @@ import Filters, { FilterItemDef } from "../../../components/filter";
 import {
   AiOutlineUpload,
   AiOutlineUserAdd,
-  AiOutlineClear,
   AiOutlineTeam,
   AiOutlineMore,
 } from "react-icons/ai";
 import { getStatus } from "@/util/shared-functions";
+import { connect } from "react-redux";
+import { actions as usersActions } from "@/state/users";
+import UsersState from "@/state/users/model";
 
-// Mock data based on the provided image
-const users = [
-  {
-    id: 1,
-    name: "Elena Rodriguez",
-    email: "elena.r@architect.com",
-    employeeId: "EA-90210",
-    department: "Design",
-    role: "LEAD",
-    status: "Active",
-    createdDate: "Oct 12, 2023",
-    avatarColor: "bg-blue-900",
-    initials: "ER",
-  },
-  {
-    id: 2,
-    name: "Marcus Chen",
-    email: "m.chen@architect.com",
-    employeeId: "EA-88421",
-    department: "Developers",
-    role: "MEMBER",
-    status: "Active",
-    createdDate: "Jan 05, 2024",
-    avatarColor: "bg-teal-700",
-    initials: "MC",
-  },
-  {
-    id: 3,
-    name: "Jordan Davis",
-    email: "j.davis@architect.com",
-    employeeId: "EA-77123",
-    department: "Medical Coders",
-    role: "MEMBER",
-    status: "Deactivated",
-    createdDate: "Nov 20, 2023",
-    avatarColor: "bg-red-200",
-    textColor: "text-red-700",
-    initials: "JD",
-  },
-  {
-    id: 4,
-    name: "Sarah Thompson",
-    email: "s.thompson@architect.com",
-    employeeId: "EA-11200",
-    department: "HR",
-    role: "LEAD",
-    status: "Active",
-    createdDate: "Mar 15, 2024",
-    avatarColor: "bg-purple-800",
-    initials: "ST",
-  },
-];
-
-const columns: ColumnsType<(typeof users)[0]> = [
+const columns: ColumnsType<any> = [
   {
     title: "USER PROFILE",
     key: "profile",
-    render: (_, record) => (
-      <div className="flex items-center gap-4 py-1">
-        <div
-          className={`w-[42px] h-[42px] rounded-md flex items-center justify-center font-bold text-white text-sm shadow-sm ${record.avatarColor} ${record.textColor || ""}`}
-        >
-          {record.initials}
+    render: (_, record) => {
+      // Create initials from name dynamically
+      const initials = record.name ? record.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
+      const avatarColor = "bg-blue-900"; // fallback color
+      return (
+        <div className="flex items-center gap-4 py-1">
+          <div
+            className={`w-[42px] h-[42px] rounded-md flex items-center justify-center font-bold text-white text-sm shadow-sm ${avatarColor}`}
+          >
+            {initials}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-gray-900 font-bold text-sm tracking-tight truncate max-w-[150px]">
+              {record.name}
+            </span>
+            <span className="text-gray-500 text-xs font-semibold truncate max-w-[150px]">
+              {record.email}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col">
-          <span className="text-gray-900 font-bold text-sm tracking-tight">
-            {record.name}
-          </span>
-          <span className="text-gray-500 text-xs font-semibold">
-            {record.email}
-          </span>
-        </div>
-      </div>
-    ),
+      );
+    },
   },
   {
     title: "EMPLOYEE ID",
     dataIndex: "employeeId",
     key: "employeeId",
-    render: (text) => (
+    render: (text: string) => (
       <span className="text-sm font-bold text-gray-700">{text}</span>
     ),
   },
   {
     title: "DEPARTMENT",
-    dataIndex: "department",
+    dataIndex: ["department", "name"],
     key: "department",
-    render: (text) => (
+    render: (text: string) => (
       <span className="text-sm font-bold text-gray-800 whitespace-pre-line leading-tight block">
-        {text}
+        {text || "N/A"}
       </span>
     ),
   },
   {
     title: "ROLE",
-    dataIndex: "role",
-    key: "role",
-    render: (text) => (
+    dataIndex: "roleType",
+    key: "roleType",
+    render: (text: string) => (
       <span className="bg-[#ebf0fc] text-[#0033a0] text-[10px] font-black tracking-wider px-3 py-1.5 rounded-full uppercase">
-        {text}
+        {text || "MEMBER"}
       </span>
     ),
   },
@@ -121,17 +75,20 @@ const columns: ColumnsType<(typeof users)[0]> = [
     title: "STATUS",
     dataIndex: "status",
     key: "status",
-    render: (text) => getStatus(text),
+    render: (text: string) => getStatus(text),
   },
   {
     title: "CREATED DATE",
-    dataIndex: "createdDate",
-    key: "createdDate",
-    render: (text) => (
-      <span className="text-sm font-bold text-gray-700 whitespace-pre-line text-[13px] leading-tight block">
-        {text}
-      </span>
-    ),
+    dataIndex: "createdAt",
+    key: "createdAt",
+    render: (text: string) => {
+      const date = new Date(text || Date.now());
+      return (
+        <span className="text-sm font-bold text-gray-700 whitespace-pre-line text-[13px] leading-tight block">
+          {date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+        </span>
+      );
+    },
   },
   {
     title: "ACTIONS",
@@ -184,10 +141,40 @@ const filterItems: FilterItemDef[] = [
   },
 ];
 
-const UsersPage = () => {
+interface UsersPageProps {
+  getUsers: (params: any) => Promise<any>;
+  getUsersData: any;
+  getUsersDataLoad?: boolean;
+}
+
+const UsersPage = ({ getUsers, getUsersData, getUsersDataLoad }: UsersPageProps) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({});
+  const [tableParams, setTableParams] = useState({
+    page: 1,
+    limit: 10,
+    search: "",
+    sortByField: "",
+    sortByType: "",
+  });
 
+  useEffect(() => {
+    // We send tableParams along with search/sorting values to Redux action
+    getUsers({ ...tableParams });
+  }, [tableParams, getUsers]);
+
+  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+    setTableParams({
+      ...tableParams,
+      page: pagination.current,
+      limit: pagination.pageSize,
+      sortByField: sorter.field || "createdAt",
+      sortByType: sorter.order === "ascend" ? "asc" : "desc",
+    });
+  };
+
+  const usersList = getUsersData?.response?.users || [];
+  const totalCount = getUsersData?.response?.totalCount || 0;
   return (
     <div className=" h-full flex flex-col pb-12">
       {/* Header Section */}
@@ -233,7 +220,7 @@ const UsersPage = () => {
             <h3 className="text-[#006056] font-extrabold tracking-widest text-[12px] mb-0.5 opacity-90">
               TOTAL USERS
             </h3>
-            <div className="text-[#006056] font-black text-4xl">1,284</div>
+            <div className="text-[#006056] font-black text-4xl">{totalCount.toLocaleString()}</div>
           </div>
           <div className="absolute right-6 top-1/2 -translate-y-1/2 w-[60px] h-[60px] bg-[#54d4b3]/60 rounded-full flex items-center justify-center shadow-inner">
             <AiOutlineTeam className="text-[#006056] text-3xl opacity-80" />
@@ -245,11 +232,15 @@ const UsersPage = () => {
       <div className="flex-1 border-transparent overflow-hidden custom-users-table">
         <TableComponent
           columns={columns}
-          dataSource={users}
-          rowKey="id"
+          dataSource={usersList}
+          rowKey="_id"
+          loading={getUsersDataLoad}
           tableProps={{
+            onChange: handleTableChange,
             pagination: {
-              total: 1284,
+              current: tableParams.page,
+              pageSize: tableParams.limit,
+              total: totalCount,
               showTotal: (total: number, range: [number, number]) => (
                 <span className="text-gray-500 text-[11px] uppercase tracking-widest font-extrabold flex items-center">
                   Showing&nbsp;
@@ -257,7 +248,7 @@ const UsersPage = () => {
                     {range[0]}-{range[1]}
                   </strong>
                   &nbsp;of&nbsp;
-                  <strong className="text-gray-900 font-black">1,284</strong>
+                  <strong className="text-gray-900 font-black">{total.toLocaleString()}</strong>
                   &nbsp;users
                 </span>
               ),
@@ -277,4 +268,14 @@ const UsersPage = () => {
   );
 };
 
-export default UsersPage;
+const enhancer = connect(
+  (state: { users: UsersState }) => ({
+    getUsersData: state.users.getUsers.data,
+    getUsersDataLoad: state.users.getUsersLoading,
+  }),
+  {
+    getUsers: usersActions.getUsers,
+  }
+);
+
+export default enhancer(UsersPage);
