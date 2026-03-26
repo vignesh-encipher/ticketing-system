@@ -1,21 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const { createTicket, getTickets, getTicket, updateTicket, deleteTicket, assignTicketToUser, changeTicketStatus } = require('../controllers/ticketController');
-const { protect, authorize } = require('../middleware/auth');
+const ticketController = require('../controllers/ticketController');
+const { protect } = require('../middleware/auth');
+const paginationMiddleware = require('../middleware/pagination');
+
+// Ensure native requests are actively intercepted by security middleware natively
+router.use(protect);
 
 const commentRouter = require('./commentRoutes');
 router.use('/:ticketId/comments', commentRouter);
 
 router.route('/')
-    .get(protect, getTickets)
-    .post(protect, createTicket);
+  .get(paginationMiddleware, ticketController.getTickets)
+  .post(ticketController.createTicket);
 
 router.route('/:id')
-    .get(protect, getTicket)
-    .put(protect, updateTicket)
-    .delete(protect, authorize('Admin', 'Manager'), deleteTicket);
-
-router.put('/:id/assign', protect, authorize('Admin', 'Manager'), assignTicketToUser);
-router.put('/:id/status', protect, changeTicketStatus);
+  .put(ticketController.updateTicket)
+  .delete(ticketController.deleteTicket);
 
 module.exports = router;

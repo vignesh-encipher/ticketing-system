@@ -1,180 +1,140 @@
-const asyncHandler = require('express-async-handler');
 const Ticket = require('../models/Ticket');
-const Project = require('../models/Project');
+const { sendResponse } = require('../utils/responseHelper');
 
-// @desc    Create a ticket
-// @route   POST /api/tickets
-// @access  Private
-const createTicket = asyncHandler(async (req, res) => {
-    const { title, description, project, priority, status, assignedTo } = req.body;
-    
-    if (!title || !description || !project) {
-        res.status(400);
-        throw new Error('Please provide title, description, and project');
+class TicketController {
+  
+  // @desc    Get all tickets with formatting pagination and filters
+  // @route   GET /api/tickets
+  // @access  Private
+  async getTickets(req, res, next) {
+    try {
+      const { skip, limit, page, search, sort } = req.pagination;
+      const { status, priority, sourceDept, targetDept } = req.query;
+
+      const filter = { isDeleted: false };
+      
+      // Dynamically attach parameters if valid
+      if (status && status !== 'All Status') filter.status = status;
+      if (priority && priority !== 'All Priorities') filter.priority = priority;
+      if (sourceDept && sourceDept !== 'All Departments') filter.sourceDept = sourceDept;
+      if (targetDept && targetDept !== 'All Departments') filter.targetDept = targetDept;
+      
+      if (search) {
+        filter.$or = [
+          { title: { $regex: search, $options: 'i' } },
+          { ticketId: { $regex: search, $options: 'i' } }
+        ];
+      }
+
+      const tickets = await Ticket.find(filter)
+        .populate('assignee', 'name profileImage email')
+        .populate('createdBy', 'name profileImage email')
+        .sort(sort || { createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+      const totalCount = await Ticket.countDocuments(filter);
+
+      return sendResponse(res, 200, 'SUCCESS', 'Tickets retrieved successfully', {
+        tickets,
+        meta: {
+          totalCount,
+          totalPages: Math.ceil(totalCount / limit),
+          currentPage: page
+        }
+      });
+    } catch (error) {
+      next(error);
     }
+  }
 
-    const projectExists = await Project.findById(project);
-    if (!projectExists) {
-        res.status(404);
-        throw new Error('Project not found');
-    }
+  // @desc    Create a ticket holding structured nested elements
+  // @route   POST /api/tickets
+  // @access  Private
+  async createTicket(req, res, next) {
+    try {
+      const { title, description, sourceDept, targetDept, priority, status, assigneeId, createdById, attachments } = req.body;
 
-    const ticketData = {
+      if (!title) {
+        return sendResponse(res, 400, 'FAILED', 'Ticket title is required');
+      }
+
+      // Prevent duplicate tickets having the identical title OR rich-text description
+      const existingTicket = await Ticket.findOne({ 
+        $or: [{ title }, { description }],
+        isDeleted: false 
+      });
+      
+      if (existingTicket) {
+        return sendResponse(res, 400, 'FAILED', 'A ticket with this exact title or description already exists in the system.');
+      }
+
+      const ticket = new Ticket({
         title,
         description,
-        project,
-        createdBy: req.user.id
-    };
+        sourceDept,
+        targetDept,
+        priority,
+        status,
+        assignee: assigneeId || null,
+        createdBy: createdById || req.user.id,
+        attachments
+      });
 
-    if (priority) ticketData.priority = priority;
-    if (status) ticketData.status = status;
-    
-    if (assignedTo && (req.user.role === 'Admin' || req.user.role === 'Manager')) {
-        ticketData.assignedTo = assignedTo;
+      const savedTicket = await ticket.save();
+      return sendResponse(res, 201, 'SUCCESS', 'Ticket created successfully', savedTicket);
+    } catch (error) {
+      if (error.name === 'ValidationError') {
+        return sendResponse(res, 400, 'FAILED', Object.values(error.errors).map(v => v.message).join(', '));
+      }
+      next(error);
     }
+  }
 
-    const ticket = await Ticket.create(ticketData);
-    res.status(201).json(ticket);
-});
+  // @desc    Update ticket selectively via parameters
+  // @route   PUT /api/tickets/:id
+  // @access  Private
+  async updateTicket(req, res, next) {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      
+      // Prevent updating system-generated constant fields globally
+      delete updateData.ticketId;
+      delete updateData.createdAt;
+      delete updateData.isDeleted;
 
-// @desc    Get all tickets (optional filter by project)
-// @route   GET /api/tickets
-// @access  Private
-const getTickets = asyncHandler(async (req, res) => {
-    const filter = {};
-    if (req.query.project) {
-        filter.project = req.query.project;
+      const ticket = await Ticket.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+      if (!ticket) {
+        return sendResponse(res, 404, 'FAILED', 'Ticket not found');
+      }
+
+      return sendResponse(res, 200, 'SUCCESS', 'Ticket updated successfully', ticket);
+    } catch (error) {
+      if (error.name === 'ValidationError') {
+        return sendResponse(res, 400, 'FAILED', Object.values(error.errors).map(v => v.message).join(', '));
+      }
+      next(error);
     }
-    // Developers only see their own tickets or those they are assigned to
-    if (req.user.role === 'Developer') {
-        filter.$or = [ { createdBy: req.user.id }, { assignedTo: req.user.id } ];
+  }
+
+  // @desc    Delete ticket efficiently by converting into Soft DB wipe
+  // @route   DELETE /api/tickets/:id
+  // @access  Private
+  async deleteTicket(req, res, next) {
+    try {
+      const { id } = req.params;
+      const ticket = await Ticket.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+      
+      if (!ticket) {
+        return sendResponse(res, 404, 'FAILED', 'Ticket not found');
+      }
+
+      return sendResponse(res, 200, 'SUCCESS', 'Ticket deleted successfully', null);
+    } catch (error) {
+      next(error);
     }
-    
-    const tickets = await Ticket.find(filter).populate('assignedTo', 'name email').populate('createdBy', 'name email');
-    res.status(200).json(tickets);
-});
+  }
+}
 
-// @desc    Get single ticket
-// @route   GET /api/tickets/:id
-// @access  Private
-const getTicket = asyncHandler(async (req, res) => {
-    const ticket = await Ticket.findById(req.params.id).populate('assignedTo', 'name email').populate('createdBy', 'name email');
-    if (!ticket) {
-        res.status(404);
-        throw new Error('Ticket not found');
-    }
-
-    // Checking if developer has access to this particular ticket
-    if (req.user.role === 'Developer' && ticket.createdBy.id !== req.user.id && ticket.assignedTo?.id !== req.user.id) {
-        res.status(403);
-        throw new Error('Not authorized to view this ticket');
-    }
-
-    res.status(200).json(ticket);
-});
-
-// @desc    Update ticket
-// @route   PUT /api/tickets/:id
-// @access  Private
-const updateTicket = asyncHandler(async (req, res) => {
-    const ticket = await Ticket.findById(req.params.id);
-    if (!ticket) {
-        res.status(404);
-        throw new Error('Ticket not found');
-    }
-
-    // Checking permissions
-    if (req.user.role === 'Developer' && ticket.assignedTo?.toString() !== req.user.id) {
-        res.status(403);
-        throw new Error('Developers can only update tickets assigned to them');
-    }
-
-    // if developer, they can only update the status
-    if (req.user.role === 'Developer') {
-        if (req.body.status) {
-            ticket.status = req.body.status;
-            await ticket.save();
-        }
-        return res.status(200).json(ticket);
-    }
-
-    // Admins and Managers can update anything
-    const updatedTicket = await Ticket.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.status(200).json(updatedTicket);
-});
-
-// @desc    Assign ticket
-// @route   PUT /api/tickets/:id/assign
-// @access  Private/Admin,Manager
-const assignTicketToUser = asyncHandler(async (req, res) => {
-    const ticket = await Ticket.findById(req.params.id);
-    if (!ticket) {
-        res.status(404);
-        throw new Error('Ticket not found');
-    }
-
-    if (req.user.role !== 'Admin' && req.user.role !== 'Manager') {
-        res.status(403);
-        throw new Error('Not authorized to assign tickets');
-    }
-
-    const { assignedTo } = req.body;
-    if (!assignedTo) {
-        res.status(400);
-        throw new Error('Please specify user to assign');
-    }
-
-    ticket.assignedTo = assignedTo;
-    await ticket.save();
-    
-    res.status(200).json(ticket);
-});
-
-// @desc    Change ticket status
-// @route   PUT /api/tickets/:id/status
-// @access  Private
-const changeTicketStatus = asyncHandler(async (req, res) => {
-    const ticket = await Ticket.findById(req.params.id);
-    if (!ticket) {
-        res.status(404);
-        throw new Error('Ticket not found');
-    }
-
-    if (req.user.role === 'Developer' && ticket.assignedTo?.toString() !== req.user.id) {
-        res.status(403);
-        throw new Error('Developers can only update status of assigned tickets');
-    }
-
-    const { status } = req.body;
-    if (!status) {
-        res.status(400);
-        throw new Error('Please provide status');
-    }
-
-    const validStatuses = ['Todo', 'In Progress', 'Done', 'Blocked'];
-    if (!validStatuses.includes(status)) {
-        res.status(400);
-        throw new Error('Invalid status');
-    }
-
-    ticket.status = status;
-    await ticket.save();
-
-    res.status(200).json(ticket);
-});
-
-// @desc    Delete ticket
-// @route   DELETE /api/tickets/:id
-// @access  Private/Admin,Manager
-const deleteTicket = asyncHandler(async (req, res) => {
-    const ticket = await Ticket.findById(req.params.id);
-    if (!ticket) {
-        res.status(404);
-        throw new Error('Ticket not found');
-    }
-
-    await ticket.deleteOne();
-    res.status(200).json({ id: req.params.id });
-});
-
-module.exports = { createTicket, getTickets, getTicket, updateTicket, deleteTicket, assignTicketToUser, changeTicketStatus };
+module.exports = new TicketController();
