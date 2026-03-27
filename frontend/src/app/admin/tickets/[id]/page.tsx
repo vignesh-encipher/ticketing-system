@@ -10,8 +10,10 @@ import {
   AiOutlineRetweet,
   AiOutlineAlignLeft,
   AiOutlineClose,
+  AiOutlineEdit,
 } from "react-icons/ai";
 import DiscussionThread from "../components/discussionThread/page";
+import TicketEditor from "@/components/textareaAttachment/page";
 import { FaArrowLeft } from "react-icons/fa";
 import { useParams, useRouter } from "next/navigation";
 import { connect } from "react-redux";
@@ -29,8 +31,16 @@ interface TicketProps {
   raisedBy: { name: string; timestamp: string };
   description: string;
   attachments: Array<{ name: string; size: string; type: "pdf" | "image" }>;
-  assignee: { name: string; profileImage: string, department: {id: string, name: string} };
-  createdBy: { name: string; profileImage: string, department: {id: string, name: string} };
+  assignee: {
+    name: string;
+    profileImage: string;
+    department: { id: string; name: string };
+  };
+  createdBy: {
+    name: string;
+    profileImage: string;
+    department: { id: string; name: string };
+  };
 
   comments: Array<{
     id: string;
@@ -170,18 +180,22 @@ interface TicketsPageProps {
   getTicketById: (params: any) => Promise<any>;
   getTicketByIdData: any;
   getTicketByIdLoad?: boolean;
+  updateTicket: (payload: any) => Promise<any>;
 }
 
 const DynamicTicketView = ({
   getTicketById,
   getTicketByIdData,
   getTicketByIdLoad,
+  updateTicket,
 }: TicketsPageProps) => {
   const router = useRouter();
   const { id } = useParams();
 
   const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingDescription, setEditingDescription] = useState("");
 
   const handleAttachmentClick = (file: any) => {
     setSelectedAttachment(file);
@@ -196,6 +210,22 @@ const DynamicTicketView = ({
   useEffect(() => {
     getTicketById(id);
   }, [id]);
+
+  useEffect(() => {
+    if (getTicketByIdData?.response?.description) {
+      setEditingDescription(getTicketByIdData.response.description);
+    }
+  }, [getTicketByIdData]);
+
+  const handleEditDescription = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveDescription = async () => {
+    await updateTicket({ id, description: editingDescription });
+    setIsEditModalOpen(false);
+    getTicketById(id); // Refresh data
+  };
 
   const data = getTicketByIdData?.response;
 
@@ -234,7 +264,11 @@ const DynamicTicketView = ({
           <p className="font-bold text-slate-800 text-lg leading-none">
             {data.createdBy.name}
           </p>
-          <p className="text-slate-400 text-sm mt-1">{data.createdAt ? dayjs(data.createdAt).format("DD-MM-YYYY hh:mm A") : "N/A"}</p>
+          <p className="text-slate-400 text-sm mt-1">
+            {data.createdAt
+              ? dayjs(data.createdAt).format("DD-MM-YYYY hh:mm A")
+              : "N/A"}
+          </p>
         </div>
       </div>
 
@@ -245,12 +279,23 @@ const DynamicTicketView = ({
           style={{ height: "70vh", overflowY: "auto" }}
         >
           <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-8">
-            <div className="flex items-center gap-2 mb-6 text-slate-500 font-bold text-xs uppercase tracking-widest">
-              <AiOutlineAlignLeft className="text-lg" /> Description
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2 text-slate-500 font-bold text-xs uppercase tracking-widest">
+                <AiOutlineAlignLeft className="text-lg" /> Description
+              </div>
+              <Button
+                type="text"
+                icon={<AiOutlineEdit />}
+                onClick={handleEditDescription}
+                className="text-indigo-600 font-bold flex items-center gap-1"
+              >
+                Edit
+              </Button>
             </div>
-            <p className="text-slate-600 leading-relaxed text-lg">
-              {data.description}
-            </p>
+            <div
+              className="text-slate-600 leading-relaxed text-lg"
+              dangerouslySetInnerHTML={{ __html: data.description }}
+            />
 
             {/* Dynamic Attachments */}
             {data.attachments.length > 0 && (
@@ -400,6 +445,39 @@ const DynamicTicketView = ({
         isModalOpen={isModalOpen}
         handleModalClose={handleModalClose}
       />
+
+      {/* --- EDIT DESCRIPTION MODAL --- */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2 border-b pb-3">
+            <AiOutlineEdit className="text-indigo-600 text-xl" />
+            <span className="text-lg font-bold text-slate-800">
+              Edit Description
+            </span>
+          </div>
+        }
+        open={isEditModalOpen}
+        onOk={handleSaveDescription}
+        onCancel={() => setIsEditModalOpen(false)}
+        okText="Save Changes"
+        cancelText="Discard"
+        okButtonProps={{
+          className: "bg-[#1e2b6a] font-bold h-10 px-6",
+        }}
+        cancelButtonProps={{
+          className: "font-bold h-10 px-6",
+        }}
+        width={700}
+        centered
+      >
+        <div className="py-2">
+          <TicketEditor
+            initialContent={editingDescription}
+            onChange={(html) => setEditingDescription(html)}
+            onFilesChange={(files) => console.log(files)}
+          />
+        </div>
+      </Modal>
     </div>
   );
 };
@@ -411,6 +489,7 @@ const enhancer = connect(
   }),
   {
     getTicketById: ticketsActions.getTicketById,
+    updateTicket: ticketsActions.updateTicket,
   },
 );
 

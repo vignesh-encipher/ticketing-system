@@ -24,11 +24,12 @@ type FileType = {
 };
 
 interface TicketEditorProps {
+  initialContent?: string;
   onChange: (html: string) => void;
   onFilesChange: (files: File[]) => void;
 }
 
-const TicketEditor: React.FC<TicketEditorProps> = ({ onChange, onFilesChange }) => {
+const TicketEditor: React.FC<TicketEditorProps> = ({ initialContent = "", onChange, onFilesChange }) => {
   const [files, setFiles] = useState<FileType[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -45,7 +46,7 @@ const TicketEditor: React.FC<TicketEditorProps> = ({ onChange, onFilesChange }) 
         placeholder: "Describe the issue or provide project details...",
       }),
     ],
-    content: "",
+    content: initialContent,
     onUpdate: ({ editor }) => {
       // Sync HTML content to Parent
       onChange(editor.getHTML());
@@ -56,6 +57,13 @@ const TicketEditor: React.FC<TicketEditorProps> = ({ onChange, onFilesChange }) 
       },
     },
   });
+
+  // Sync initialContent when it changes
+  useEffect(() => {
+    if (editor && initialContent !== editor.getHTML()) {
+      editor.commands.setContent(initialContent);
+    }
+  }, [initialContent, editor]);
 
   // Handle Internal File State and Sync to Parent
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,10 +180,9 @@ const TicketEditor: React.FC<TicketEditorProps> = ({ onChange, onFilesChange }) 
         </div>
       )}
 
-      {/* 📝 INFO FOOTER */}
       <div className="px-4 py-2 bg-slate-50/50 border-t border-slate-100 flex justify-end">
         <span className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">
-          {editor.storage.starterKit ? "Auto-saving..." : ""}
+          Auto-saving...
         </span>
       </div>
 
