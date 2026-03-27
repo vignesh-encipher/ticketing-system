@@ -1,31 +1,30 @@
-export const getStorage = async (key: string) => {
+export const getStorage = (key: string) => {
+  if (typeof window === "undefined") return null;
   try {
-    return await localStorage.getItem(key);
+    return sessionStorage.getItem(key);
   } catch (error) {
-    console.error(`Error getting '${key}' from LocalStorage`);
+    console.error(`Error getting '${key}' from session storage`);
     console.error(error);
     return null;
   }
 };
 
-export const setStorage = async (key: string, value: string) => {
+export const setStorage = (key: string, value: string) => {
+  if (typeof window === "undefined") return;
   try {
-    await localStorage.setItem(key, value);
-    return Promise.resolve();
+    sessionStorage.setItem(key, value);
   } catch (error) {
-    console.error(`Error setting '${key}' in LocalStorage`);
+    console.error(`Error setting '${key}' in session storage`);
     console.error(error);
-    return null;
   }
 };
 
-export const removeStorage = async (key: string) => {
+export const removeStorage = (key: string) => {
+  if (typeof window === "undefined") return;
   try {
-    localStorage.removeItem(key);
-    return Promise.resolve();
+    sessionStorage.removeItem(key);
   } catch (error) {
-    console.error(`Error removing token ${key} from LocalStorage`);
+    console.error(`Error removing '${key}' from session storage`);
     console.error(error);
-    return null;
   }
 };

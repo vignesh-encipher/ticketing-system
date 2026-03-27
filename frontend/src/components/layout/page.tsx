@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Layout, ConfigProvider, theme as antdTheme } from "antd";
 import Header from "./header";
 import Sidebar from "./sidebar";
@@ -16,6 +16,13 @@ interface LayoutPageProps {
 const LayoutPage = ({ role = "admin", children }: LayoutPageProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const { theme } = useTheme();
+
+  useEffect(() => {
+    // Hardcoding userId in session storage as requested for global availability
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("userId", "69c62bbb45c503f96ab8ae2d");
+    }
+  }, []);
 
   // Memoize theme config to prevent recreation on every render
   const themeConfig = useMemo(

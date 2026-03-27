@@ -23,6 +23,7 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/departments', require('./routes/departmentRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
 app.use('/api/tickets', require('./routes/ticketRoutes'));
+app.use('/api/comments', require('./routes/commentRoutes'));
 
 // Error Handler
 app.use(errorHandler);

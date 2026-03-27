@@ -8,9 +8,6 @@ const paginationMiddleware = require('../middleware/pagination');
 // Ensure native requests are actively intercepted by security middleware natively
 router.use(protect);
 
-const commentRouter = require('./commentRoutes');
-router.use('/:ticketId/comments', commentRouter);
-
 router.route('/')
   .get(paginationMiddleware, ticketController.getTickets)
   .post(ticketController.createTicket);

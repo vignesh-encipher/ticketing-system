@@ -1,3 +1,33 @@
+export interface UserDetails {
+  id: string;
+  name: string;
+  email: string;
+  employeeId?: string;
+  department?: string;
+  roleType?: string;
+  profileImage?: string | null;
+}
+
+export interface CommentData {
+  _id: string;
+  ticketId: string;
+  userDetails: UserDetails;
+  message: string;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommentsResponse {
+  comments: CommentData[];
+  pagination: {
+    totalCount: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+  }
+}
+
 export interface TicketData {
   id: string;
   ticketId: string;
@@ -50,6 +80,13 @@ export default class TicketsState {
   createTicketLoading: boolean | undefined;
   updateTicketLoading: boolean | undefined;
   deleteTicketLoading: boolean | undefined;
+  
+  getComments: {
+    data: { response: CommentsResponse; status: string; message: string; } | null;
+    error: string | null;
+    loading: boolean;
+  };
+  addCommentLoading: boolean | undefined;
 
   constructor() {
     this.getTickets = {
@@ -67,5 +104,11 @@ export default class TicketsState {
     this.createTicketLoading = false;
     this.updateTicketLoading = false;
     this.deleteTicketLoading = false;
+    this.getComments = {
+      data: null,
+      error: null,
+      loading: false
+    };
+    this.addCommentLoading = false;
   }
 }

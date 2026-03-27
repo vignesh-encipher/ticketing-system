@@ -20,8 +20,9 @@ import { connect } from "react-redux";
 import TicketsState from "@/state/tickets/model";
 import { actions as ticketsActions } from "@/state/tickets";
 import dayjs from "dayjs";
-import { formatFileSize } from "@/util/formatting";
+import { formatFileSize, getResponsePopup } from "@/util/formatting";
 import AttachmentModal from "../components/attachment/page";
+import { getStorage } from "@/util/storage";
 
 interface TicketProps {
   id: string;
@@ -181,6 +182,11 @@ interface TicketsPageProps {
   getTicketByIdData: any;
   getTicketByIdLoad?: boolean;
   updateTicket: (payload: any) => Promise<any>;
+  getComments: (ticketId: string) => Promise<any>;
+  addComment: (payload: any) => Promise<any>;
+  getCommentsData: any;
+  getCommentsLoad?: boolean;
+  addCommentLoad?: boolean;
 }
 
 const DynamicTicketView = ({
@@ -188,6 +194,11 @@ const DynamicTicketView = ({
   getTicketByIdData,
   getTicketByIdLoad,
   updateTicket,
+  getComments,
+  addComment,
+  getCommentsData,
+  getCommentsLoad,
+  addCommentLoad,
 }: TicketsPageProps) => {
   const router = useRouter();
   const { id } = useParams();
@@ -196,6 +207,17 @@ const DynamicTicketView = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingDescription, setEditingDescription] = useState("");
+  const [commentText, setCommentText] = useState("");
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  };
 
   const handleAttachmentClick = (file: any) => {
     setSelectedAttachment(file);
@@ -208,8 +230,18 @@ const DynamicTicketView = ({
   };
 
   useEffect(() => {
-    getTicketById(id);
+    if (id) {
+      getTicketById(id);
+      getComments(id as string);
+    }
   }, [id]);
+
+  useEffect(() => {
+    if (getCommentsData) {
+      // Small timeout to ensure DOM has updated
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [getCommentsData]);
 
   useEffect(() => {
     if (getTicketByIdData?.response?.description) {
@@ -227,12 +259,34 @@ const DynamicTicketView = ({
     getTicketById(id); // Refresh data
   };
 
+  const handleSendComment = async () => {
+    if (!commentText.trim()) return;
+
+    const sessionUserId = getStorage("userId");
+    const userId = sessionUserId || "69c62bbb45c503f96ab8ae2d";
+
+    const payload = {
+      ticketId: id,
+      message: commentText,
+      userId: userId,
+    };
+
+    const result = await addComment(payload);
+    if (result?.status === "SUCCESS") {
+      getResponsePopup(result);
+      setCommentText("");
+      getComments(id as string); // Refresh comments
+    }
+  };
+
   const data = getTicketByIdData?.response;
+
+  const currentUserId = getStorage("userId") || "69c62bbb45c503f96ab8ae2d";
 
   if (!data) return <div>Loading...</div>;
   return (
     <div className="h-[80vh] bg-white font-sans text-slate-900">
-      {/* --- HEADER --- */}
+      {/* ... existing code ... */}
       <div className="flex justify-between items-start mb-8">
         <div>
           <div className="flex gap-2 mb-4">
@@ -275,6 +329,7 @@ const DynamicTicketView = ({
       <div className="flex flex-col lg:flex-row gap-12">
         {/* --- LEFT COLUMN --- */}
         <div
+          ref={scrollRef}
           className="flex-1 space-y-10"
           style={{ height: "70vh", overflowY: "auto" }}
         >
@@ -298,7 +353,7 @@ const DynamicTicketView = ({
             />
 
             {/* Dynamic Attachments */}
-            {data.attachments.length > 0 && (
+            {data.attachments && data.attachments.length > 0 && (
               <div className="mt-10">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
                   Attachments ({data.attachments.length})
@@ -332,9 +387,9 @@ const DynamicTicketView = ({
             )}
           </div>
           {/* Discussion Thread */}
-          <DiscussionThread
-            comments={datas.comments}
-            currentUserId="admin_456"
+          <DiscussionThread 
+            comments={getCommentsData?.response?.comments || []}
+            currentUserId={currentUserId}
           />
         </div>
 
@@ -351,6 +406,7 @@ const DynamicTicketView = ({
                 </p>
                 <div className="flex items-center gap-3">
                   <Avatar className="bg-[#1e2b6a] font-bold">
+                    {data.assignee.profileImage ? "" : data.assignee.name?.charAt(0)}
                     {data.assignee.profileImage}
                   </Avatar>
                   <span className="font-bold text-slate-800">
@@ -364,7 +420,7 @@ const DynamicTicketView = ({
                     Dept
                   </p>
                   <p className="font-bold text-slate-800 text-sm">
-                    {data.createdBy.department.name}
+                    {data.createdBy.department?.name || "N/A"}
                   </p>
                 </div>
                 <div>
@@ -372,7 +428,7 @@ const DynamicTicketView = ({
                     Target
                   </p>
                   <p className="font-bold text-slate-800 text-sm">
-                    {data.assignee.department.name}
+                    {data.assignee.department?.name || "N/A"}
                   </p>
                 </div>
               </div>
@@ -412,12 +468,18 @@ const DynamicTicketView = ({
         <Input
           placeholder="Add a comment... (use @ to mention)"
           className="h-11 bg-slate-50 border-none rounded-lg"
+          value={commentText}
+          onChange={(e) => setCommentText(e.target.value)}
+          onPressEnter={handleSendComment}
+          disabled={addCommentLoad}
         />
         <div className="flex items-center gap-4">
           <Button
             type="primary"
             size="large"
             className="bg-[#1e2b6a] h-11 px-6 font-bold flex items-center gap-2"
+            onClick={handleSendComment}
+            loading={addCommentLoad}
           >
             Send <AiOutlineSend />
           </Button>
@@ -483,13 +545,18 @@ const DynamicTicketView = ({
 };
 
 const enhancer = connect(
-  (state: { tickets: TicketsState }) => ({
+  (state: { tickets: any }) => ({
     getTicketByIdData: state.tickets.getTicketById.data,
     getTicketByIdLoad: state.tickets.getTicketByIdLoading,
+    getCommentsData: state.tickets.getComments.data,
+    getCommentsLoad: state.tickets.getCommentsLoading,
+    addCommentLoad: state.tickets.addCommentLoading,
   }),
   {
     getTicketById: ticketsActions.getTicketById,
     updateTicket: ticketsActions.updateTicket,
+    getComments: ticketsActions.getComments,
+    addComment: ticketsActions.addComment,
   },
 );
 

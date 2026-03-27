@@ -49,3 +49,21 @@ export async function getTicketById(id: string) {
   const data = await requestPortal(`tickets/${id}`, options);
   return data;
 }
+
+export async function getComments(ticketId: string, params?: any) {
+  const { page = 1, limit = 20 } = params || {};
+  const options = {
+    method: "GET",
+  };
+  const data = await requestPortal(`comments/${ticketId}?page=${page}&limit=${limit}`, options);
+  return data;
+}
+
+export async function addComment(payload: any) {
+  const options = {
+    method: "POST",
+    body: JSON.stringify(payload),
+  };
+  const data = await requestPortal(`comments`, options);
+  return data;
+}

@@ -1,10 +1,18 @@
 const express = require('express');
-const router = express.Router({ mergeParams: true }); 
-const { addComment, getComments } = require('../controllers/commentController');
+const router = express.Router(); 
+const { addComment, getComments, updateComment, deleteComment } = require('../controllers/commentController');
 const { protect } = require('../middleware/auth');
 
+router.use(protect);
+
 router.route('/')
-    .get(protect, getComments)
-    .post(protect, addComment);
+    .post(addComment);
+
+router.route('/:ticketId')
+    .get(getComments);
+
+router.route('/:id')
+    .put(updateComment)
+    .delete(deleteComment);
 
 module.exports = router;

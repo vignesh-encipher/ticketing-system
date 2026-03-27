@@ -25,3 +25,13 @@ export const deleteTicket = createActionThunk(
   'DELETE_ADMIN_TICKET',
   network.deleteTicket
 );
+
+export const getComments = createActionThunk(
+  'GET_ADMIN_TICKET_COMMENTS',
+  network.getComments
+);
+
+export const addComment = createActionThunk(
+  'ADD_ADMIN_TICKET_COMMENT',
+  network.addComment
+);
