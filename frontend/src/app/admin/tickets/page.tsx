@@ -10,26 +10,20 @@ import { AiOutlineMore } from "react-icons/ai";
 import { getPriority, getStatus } from "@/util/shared-functions";
 import { useRouter } from "next/navigation";
 import { getTickets } from "@/state/tickets/actions";
-import { exactData } from "@/util/formatting";
+import { exactData, getPriorities } from "@/util/formatting";
 import { connect } from "react-redux";
 import TicketsState from "@/state/tickets/model";
 import { actions as ticketsActions } from "@/state/tickets";
+import { actions as usersActions } from "@/state/users";
+import UsersState from "@/state/users/model";
 
 // Filter configuration matching backend
-const filterItems = [
+const filterItem = [
   {
     type: "select" as const,
     name: "department",
     title: "DEPARTMENT",
-    options: [
-      { value: "All Departments", label: "All Departments" },
-      { value: "Engineering", label: "Engineering" },
-      { value: "Medical Coders", label: "Medical Coders" },
-      { value: "Marketing", label: "Marketing" },
-      { value: "HR", label: "HR" },
-      { value: "Developers", label: "Developers" },
-      { value: "IT", label: "IT" },
-    ],
+    options: [],
     active: true,
   },
   {
@@ -51,10 +45,7 @@ const filterItems = [
     title: "PRIORITY",
     options: [
       { value: "All Priorities", label: "All Priorities" },
-      { value: "Critical", label: "Critical" },
-      { value: "High", label: "High" },
-      { value: "Medium", label: "Medium" },
-      { value: "Low", label: "Low" },
+      ...getPriorities,
     ],
     active: true,
   },
@@ -64,23 +55,26 @@ interface TicketsPageProps {
   getTickets: (params: any) => Promise<any>;
   getTicketsData: any;
   getTicketsDataLoad?: boolean;
+  getDepartments: (params: any) => Promise<any>;
+  departmentsData: any;
 }
 
 const TicketsPage = ({
   getTickets,
   getTicketsData,
   getTicketsDataLoad,
+  getDepartments,
+  departmentsData,
 }: TicketsPageProps) => {
   const router = useRouter();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [filterItems, setFilterItems] = useState(filterItem);
   const [selectedFilters, setSelectedFilters] = useState({});
   const [tableParams, setTableParams] = useState({
     page: 1,
     limit: 10,
     search: "",
   });
-
- 
 
   // Handle table pagination manually
   const handleTableChange = (pagination: any, filters: any, sorter: any) => {
@@ -133,7 +127,9 @@ const TicketsPage = ({
       key: "targetDept",
       width: 140,
       render: (text) => (
-        <span className="text-gray-700 font-semibold text-[14px]">{text || "-"}</span>
+        <span className="text-gray-700 font-semibold text-[14px]">
+          {text || "-"}
+        </span>
       ),
     },
     {
@@ -202,7 +198,10 @@ const TicketsPage = ({
       align: "right",
       width: 50,
       render: () => (
-        <button className="text-gray-400 hover:text-[#143477] transition-colors p-1" onClick={(e) => e.stopPropagation()}>
+        <button
+          className="text-gray-400 hover:text-[#143477] transition-colors p-1"
+          onClick={(e) => e.stopPropagation()}
+        >
           <AiOutlineMore className="text-2xl" />
         </button>
       ),
@@ -219,11 +218,41 @@ const TicketsPage = ({
   };
 
   useEffect(() => {
+    getDepartments({});
+  }, []);
+
+  useEffect(() => {
     getTicketsListApi();
   }, [tableParams, selectedFilters]);
 
+  useEffect(() => {
+    if (departmentsData?.status == "SUCCESS") {
+      const deptOptions = departmentsData?.response?.departments?.map(
+        (d: any) => ({
+          value: d.name,
+          label: d.name,
+        }),
+      );
+      const data = filterItems.map((item: any) => {
+        if (item.name === "department") {
+          return {
+            ...item,
+            options: [
+              { value: "All Departments", label: "All Departments" },
+              ...deptOptions,
+            ],
+          };
+        }
+        return item;
+      });
+      setFilterItems(data);
+    }
+  }, [departmentsData]);
+
   const totalCount = getTicketsData?.total;
-  const criticalCount = getTicketsData?.tickets?.filter((ticket: any) => ticket.priority === "Critical").length;
+  const criticalCount = getTicketsData?.tickets?.filter(
+    (ticket: any) => ticket.priority === "Critical",
+  ).length;
   const ticketsList = getTicketsData?.response?.tickets;
 
   return (
@@ -241,14 +270,14 @@ const TicketsPage = ({
 
         {/* Metric Cards */}
         <div className="flex gap-4">
-           <div className="flex justify-end">
-          <button
-            className="bg-[#143477] cursor-pointer text-white hover:bg-[#0f265e] transition-colors py-2.5 px-6 rounded-[10px] flex items-center gap-2 font-bold shadow-md text-sm"
-            onClick={() => setIsDrawerOpen(true)}
-          >
-            Create Ticket
-          </button>
-        </div>
+          <div className="flex justify-end">
+            <button
+              className="bg-[#143477] cursor-pointer text-white hover:bg-[#0f265e] transition-colors py-2.5 px-6 rounded-[10px] flex items-center gap-2 font-bold shadow-md text-sm"
+              onClick={() => setIsDrawerOpen(true)}
+            >
+              Create Ticket
+            </button>
+          </div>
           {/* <div className="bg-[#f8f9fa] rounded-[16px] py-4 px-6 min-w-[140px] flex flex-col items-center justify-center">
             <span className="text-gray-500 font-extrabold text-[10px] tracking-widest uppercase mb-1">
               TOTAL ACTIVE
@@ -283,7 +312,7 @@ const TicketsPage = ({
           onRowClick={(record) => {
             console.log("Row clicked:", record);
             router.push(`/admin/tickets/details/${record.id}`);
-          }}  
+          }}
           tableProps={{
             onChange: handleTableChange,
             pagination: {
@@ -307,21 +336,24 @@ const TicketsPage = ({
           }}
         />
       </div>
-       <CreateTicketDrawer
+      <CreateTicketDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
+        getTicketsListApi={getTicketsListApi}
       />
     </div>
   );
 };
 
 const enhancer = connect(
-  (state: { tickets: TicketsState }) => ({
+  (state: { tickets: TicketsState; users: UsersState }) => ({
     getTicketsData: state.tickets.getTickets.data,
     getTicketsDataLoad: state.tickets.getTicketsLoading,
+    departmentsData: state.users.getDepartments.data,
   }),
   {
     getTickets: ticketsActions.getTickets,
+    getDepartments: usersActions.getDepartments,
   },
 );
 

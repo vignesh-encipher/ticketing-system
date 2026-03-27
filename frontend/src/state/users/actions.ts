@@ -19,3 +19,8 @@ export const getDepartments = createActionThunk(
   'GET_DEPARTMENTS_LIST',
   network.getDepartments
 );
+
+export const getUsersByDepartment = createActionThunk(
+  'GET_USERS_BY_DEPARTMENT',
+  network.getUsersByDepartment
+)

@@ -56,3 +56,12 @@ export async function getDepartments() {
   const data = await requestPortal(`departments`, options);
   return data;
 }
+
+export async function getUsersByDepartment(departmentName: string, role: string) {
+  const options = {
+    method: "GET",
+  };
+
+  const data = await requestPortal(`users/department/${departmentName}?role=${role}`, options);
+  return data;
+}

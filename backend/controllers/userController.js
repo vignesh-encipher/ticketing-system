@@ -69,6 +69,17 @@ class UserController {
       next(error);
     }
   }
+
+  async getUsersByDepartment(req, res, next) {
+    try {
+      const { departmentName } = req.params;
+      const { role } = req.query;
+      const result = await userService.getUsersByDepartment(departmentName, role);
+      return sendResponse(res, 200, 'SUCCESS', 'Users retrieved successfully', result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new UserController();

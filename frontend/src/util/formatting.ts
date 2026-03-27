@@ -50,3 +50,10 @@ export const getRoles = [
   { value: "Admin", label: "Admin" },
   { value: "Member", label: "Member" },
 ];
+
+export const getPriorities = [
+  { value: "Critical", label: "Critical" },
+  { value: "High", label: "High" },
+  { value: "Medium", label: "Medium" },
+  { value: "Low", label: "Low" },
+];

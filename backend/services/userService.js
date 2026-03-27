@@ -86,6 +86,27 @@ class UserService {
   async findByEmployeeId(employeeId) {
     return await User.findOne({ employeeId });
   }
+
+  async getUsersByDepartment(departmentName, roleType) {
+    const query = { isDeleted: false };
+    if (departmentName && departmentName !== 'All Departments') {
+      const Department = require('../models/Department');
+      const deptDoc = await Department.findOne({ name: { $regex: new RegExp('^' + departmentName + '$', 'i') } });
+      if (deptDoc) {
+        query.department = deptDoc._id;
+      } else {
+        return []; 
+      }
+    }
+
+    if (roleType && roleType !== 'All Roles') {
+      query.roleType = { $regex: new RegExp('^' + roleType + '$', 'i') };
+    }
+
+    return await User.find(query)
+      .populate('department', 'name')
+      .select('name email employeeId roleType');
+  }
 }
 
 module.exports = new UserService();

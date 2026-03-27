@@ -41,6 +41,9 @@ export default class TicketsState {
     loading: boolean;
   };
   getTicketsLoading: boolean | undefined;
+  createTicketLoading: boolean | undefined;
+  updateTicketLoading: boolean | undefined;
+  deleteTicketLoading: boolean | undefined;
 
   constructor() {
     this.getTickets = {
@@ -49,5 +52,8 @@ export default class TicketsState {
       loading: false
     };
     this.getTicketsLoading = false;
+    this.createTicketLoading = false;
+    this.updateTicketLoading = false;
+    this.deleteTicketLoading = false;
   }
 }
