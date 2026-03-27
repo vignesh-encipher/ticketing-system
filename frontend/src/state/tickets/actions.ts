@@ -35,3 +35,8 @@ export const addComment = createActionThunk(
   'ADD_ADMIN_TICKET_COMMENT',
   network.addComment
 );
+
+export const getActivityLogs = createActionThunk(
+  'GET_ADMIN_TICKET_ACTIVITY',
+  network.getActivityLogs
+);

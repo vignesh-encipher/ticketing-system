@@ -67,3 +67,12 @@ export async function addComment(payload: any) {
   const data = await requestPortal(`comments`, options);
   return data;
 }
+
+export async function getActivityLogs(ticketId: string, params?: any) {
+  const { page = 1, limit = 20 } = params || {};
+  const options = {
+    method: "GET",
+  };
+  const data = await requestPortal(`activity/${ticketId}?page=${page}&limit=${limit}`, options);
+  return data;
+}

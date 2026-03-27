@@ -2,6 +2,7 @@ const asyncHandler = require('express-async-handler');
 const Comment = require('../models/Comment');
 const Ticket = require('../models/Ticket');
 const User = require('../models/User');
+const ActivityLog = require('../models/ActivityLog');
 const { sendResponse } = require('../utils/responseHelper');
 
 // @desc    Add comment to a ticket
@@ -45,6 +46,18 @@ const addComment = asyncHandler(async (req, res) => {
             message,
             userDetails
         });
+
+        // Programmatically create an activity log
+        try {
+            await ActivityLog.create({
+                ticketId,
+                action: 'COMMENT_ADDED',
+                status: 'success',
+                userDetails
+            });
+        } catch (logError) {
+            console.error('Failed to create activity log for comment:', logError);
+        }
 
         return sendResponse(res, 201, 'SUCCESS', 'Comment added successfully', comment);
     } catch (error) {

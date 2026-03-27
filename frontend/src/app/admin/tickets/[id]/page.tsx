@@ -20,6 +20,8 @@ import { connect } from "react-redux";
 import TicketsState from "@/state/tickets/model";
 import { actions as ticketsActions } from "@/state/tickets";
 import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 import { formatFileSize, getResponsePopup } from "@/util/formatting";
 import AttachmentModal from "../components/attachment/page";
 import { getStorage } from "@/util/storage";
@@ -187,6 +189,9 @@ interface TicketsPageProps {
   getCommentsData: any;
   getCommentsLoad?: boolean;
   addCommentLoad?: boolean;
+  getActivityLogs: (ticketId: string) => Promise<any>;
+  getActivityLogsData: any;
+  getActivityLogsLoad?: boolean;
 }
 
 const DynamicTicketView = ({
@@ -199,6 +204,9 @@ const DynamicTicketView = ({
   getCommentsData,
   getCommentsLoad,
   addCommentLoad,
+  getActivityLogs,
+  getActivityLogsData,
+  getActivityLogsLoad,
 }: TicketsPageProps) => {
   const router = useRouter();
   const { id } = useParams();
@@ -233,6 +241,7 @@ const DynamicTicketView = ({
     if (id) {
       getTicketById(id);
       getComments(id as string);
+      getActivityLogs(id as string);
     }
   }, [id]);
 
@@ -276,10 +285,12 @@ const DynamicTicketView = ({
       getResponsePopup(result);
       setCommentText("");
       getComments(id as string); // Refresh comments
+      getActivityLogs(id as string); // Refresh activity logs
     }
   };
 
   const data = getTicketByIdData?.response;
+  const activityLogs = getActivityLogsData?.response?.logs || [];
 
   const currentUserId = getStorage("userId") || "69c62bbb45c503f96ab8ae2d";
 
@@ -441,7 +452,7 @@ const DynamicTicketView = ({
             </div>
             <div className="h-[40vh] overflow-y-scroll pt-1">
               <Timeline
-                items={datas.activities.map((act: any) => ({
+                items={activityLogs.map((act: any) => ({
                   color: act.status === "success" ? "green" : "blue",
                   children: (
                     <div className="pb-4">
@@ -449,7 +460,7 @@ const DynamicTicketView = ({
                         {act.action}
                       </p>
                       <p className="text-[10px] text-slate-400 m-0">
-                        {act.user} • {act.time}
+                        {act.userDetails?.name || "System"} • {dayjs(act.createdAt).fromNow()}
                       </p>
                     </div>
                   ),
@@ -551,12 +562,15 @@ const enhancer = connect(
     getCommentsData: state.tickets.getComments.data,
     getCommentsLoad: state.tickets.getCommentsLoading,
     addCommentLoad: state.tickets.addCommentLoading,
+    getActivityLogsData: state.tickets.getActivityLogs.data,
+    getActivityLogsLoad: state.tickets.getActivityLogsLoading,
   }),
   {
     getTicketById: ticketsActions.getTicketById,
     updateTicket: ticketsActions.updateTicket,
     getComments: ticketsActions.getComments,
     addComment: ticketsActions.addComment,
+    getActivityLogs: ticketsActions.getActivityLogs,
   },
 );
 

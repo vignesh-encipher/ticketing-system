@@ -28,6 +28,27 @@ export interface CommentsResponse {
   }
 }
 
+export interface ActivityLogData {
+  _id: string;
+  ticketId: string;
+  userDetails: UserDetails;
+  action: 'COMMENT_ADDED' | 'TICKET_CREATED' | 'ASSIGNED' | 'REASSIGNED' | 'STATUS_CHANGED' | 'DESCRIPTION_EDIT';
+  status: 'success' | 'processing' | 'error' | 'warning';
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ActivityLogsResponse {
+  logs: ActivityLogData[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }
+}
+
 export interface TicketData {
   id: string;
   ticketId: string;
@@ -86,7 +107,15 @@ export default class TicketsState {
     error: string | null;
     loading: boolean;
   };
+  getCommentsLoading: boolean | undefined;
   addCommentLoading: boolean | undefined;
+
+  getActivityLogs: {
+    data: { response: ActivityLogsResponse; status: string; message: string; } | null;
+    error: string | null;
+    loading: boolean;
+  };
+  getActivityLogsLoading: boolean | undefined;
 
   constructor() {
     this.getTickets = {
@@ -109,6 +138,13 @@ export default class TicketsState {
       error: null,
       loading: false
     };
+    this.getCommentsLoading = false;
     this.addCommentLoading = false;
+    this.getActivityLogs = {
+      data: null,
+      error: null,
+      loading: false
+    };
+    this.getActivityLogsLoading = false;
   }
 }

@@ -1,28 +1,40 @@
 const mongoose = require('mongoose');
 
 const activityLogSchema = new mongoose.Schema({
-  ticket: {
+  ticketId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Ticket',
     required: true
   },
+  userDetails: {
+    name: String,
+    email: String,
+    employeeId: String,
+    department: String,
+    roleType: String,
+    profileImage: String,
+    id: String
+  },
   action: {
     type: String,
     required: true,
-    enum: ['Ticket Created', 'Status Changed', 'Priority Changed', 'Assigned To', 'Comment Added', 'Attachment Added', 'Ticket Updated']
+    enum: ['COMMENT_ADDED', 'TICKET_CREATED', 'ASSIGNED', 'REASSIGNED', 'STATUS_CHANGED', 'DESCRIPTION_EDIT']
   },
-  performedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+  status: {
+    type: String,
+    required: true,
+    enum: ['success', 'processing', 'error', 'warning'],
+    default: 'processing'
   },
-  details: {
-    type: Object,
-    default: {}
+  isDeleted: {
+    type: Boolean,
+    default: false
   }
-}, { timestamps: true });
+}, { 
+  timestamps: true 
+});
 
-// Exclude _id and __v from JSON responses, use 'id' instead
+// Configure toJSON to return virtuals and format IDs
 activityLogSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,

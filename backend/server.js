@@ -24,6 +24,7 @@ app.use('/api/departments', require('./routes/departmentRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
 app.use('/api/tickets', require('./routes/ticketRoutes'));
 app.use('/api/comments', require('./routes/commentRoutes'));
+app.use('/api/activity', require('./routes/activityRoutes'));
 
 // Error Handler
 app.use(errorHandler);
