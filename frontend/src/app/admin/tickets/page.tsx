@@ -22,6 +22,7 @@ const filterItem = [
   {
     type: "select" as const,
     name: "department",
+    placeholder: "Select Department",
     title: "DEPARTMENT",
     options: [],
     active: true,
@@ -30,8 +31,8 @@ const filterItem = [
     type: "select" as const,
     name: "status",
     title: "STATUS",
+    placeholder: "Select Status",
     options: [
-      { value: "All Statuses", label: "All Statuses" },
       { value: "Open", label: "Open" },
       { value: "In Progress", label: "In Progress" },
       { value: "Resolved", label: "Resolved" },
@@ -43,8 +44,8 @@ const filterItem = [
     type: "select" as const,
     name: "priority",
     title: "PRIORITY",
+    placeholder: "Select Priority",
     options: [
-      { value: "All Priorities", label: "All Priorities" },
       ...getPriorities,
     ],
     active: true,
@@ -238,7 +239,6 @@ const TicketsPage = ({
           return {
             ...item,
             options: [
-              { value: "All Departments", label: "All Departments" },
               ...deptOptions,
             ],
           };

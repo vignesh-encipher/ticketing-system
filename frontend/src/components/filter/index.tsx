@@ -52,7 +52,7 @@ const Filters: React.FC<FiltersProps> = ({
                   className="w-full"
                   placeholder={item.placeholder}
                   options={item.options}
-                  value={selectedOption?.[item.name] || item.options?.[0]?.value}
+                  value={selectedOption?.[item.name] || undefined}
                   onChange={(val) =>
                     setSelectedOption && setSelectedOption({ ...selectedOption, [item.name]: val })
                   }

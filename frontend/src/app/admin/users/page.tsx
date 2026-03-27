@@ -22,6 +22,7 @@ const filterItem: FilterItemDef[] = [
   {
     type: "select",
     name: "department",
+    placeholder: "Select Department",
     title: "DEPT",
     options: [],
     active: true,
@@ -30,15 +31,16 @@ const filterItem: FilterItemDef[] = [
     type: "select",
     name: "role",
     title: "ROLE",
-    options: [{ value: "All Roles", label: "All Roles" }, ...getRoles],
+    placeholder: "Select Role",
+    options: [...getRoles],
     active: true,
   },
   {
     type: "select",
     name: "status",
     title: "STATUS",
+    placeholder: "Select Status",
     options: [
-      { value: "Any Status", label: "Any Status" },
       { value: "Active", label: "Active" },
       { value: "Inactive", label: "Inactive" },
     ],
