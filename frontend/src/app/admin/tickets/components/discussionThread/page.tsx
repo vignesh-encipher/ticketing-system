@@ -30,7 +30,7 @@ const DiscussionThread = ({ comments, currentUserId }: DiscussionThreadProps) =>
                 key={comment._id || index}
                 className={`flex gap-4 max-w-[85%] ${
                   isMe
-                    ? "flex-row-reverse self-end text-right"
+                    ? "flex-row-reverse self-end text-left"
                     : "self-start text-left"
                 }`}
               >
