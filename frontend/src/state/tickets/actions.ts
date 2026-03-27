@@ -6,6 +6,11 @@ export const getTickets = createActionThunk(
   network.getTickets
 );
 
+export const getTicketById = createActionThunk(
+  'GET_ADMIN_TICKET_BY_ID',
+  network.getTicketById
+);
+
 export const createTicket = createActionThunk(
   'CREATE_ADMIN_TICKET',
   network.createTicket

@@ -311,7 +311,7 @@ const TicketsPage = ({
           loading={getTicketsDataLoad}
           onRowClick={(record) => {
             console.log("Row clicked:", record);
-            router.push(`/admin/tickets/details/${record.id}`);
+            router.push(`/admin/tickets/${record.id}`);
           }}
           tableProps={{
             onChange: handleTableChange,

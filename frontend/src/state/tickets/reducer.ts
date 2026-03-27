@@ -1,6 +1,6 @@
 import { combineReducers } from "redux";
 import { handleActions } from "redux-actions";
-import { getTickets, createTicket, updateTicket, deleteTicket } from "./actions";
+import { getTickets, createTicket, updateTicket, deleteTicket, getTicketById } from "./actions";
 
 const initialState = {
   loading: true,
@@ -39,6 +39,8 @@ const getLoading = (type: any) =>
 const codifyReducer = combineReducers({
   getTickets: createReducer(getTickets),
   getTicketsLoading: getLoading(getTickets),
+  getTicketById: createReducer(getTicketById),
+  getTicketByIdLoading: getLoading(getTicketById),
   createTicketLoading: getLoading(createTicket),
   updateTicketLoading: getLoading(updateTicket),
   deleteTicketLoading: getLoading(deleteTicket),

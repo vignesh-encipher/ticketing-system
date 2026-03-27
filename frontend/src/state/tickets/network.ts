@@ -41,3 +41,11 @@ export async function deleteTicket(id: string) {
   const data = await requestPortal(`tickets/${id}`, options);
   return data;
 }
+
+export async function getTicketById(id: string) {
+  const options = {
+    method: "GET",
+  };
+  const data = await requestPortal(`tickets/${id}`, options);
+  return data;
+}

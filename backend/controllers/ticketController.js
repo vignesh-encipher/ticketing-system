@@ -48,6 +48,40 @@ class TicketController {
     }
   }
 
+  // @desc    Get single ticket by ID
+  // @route   GET /api/tickets/:id
+  // @access  Private
+  async getTicketById(req, res, next) {
+    try {
+      const { id } = req.params;
+      const ticket = await Ticket.findById(id)
+        .populate({
+          path: 'assignee',
+          select: 'name profileImage email employeeId department',
+          populate: {
+            path: 'department',
+            select: 'name'
+          }
+        })
+        .populate({
+          path: 'createdBy',
+          select: 'name profileImage email employeeId department',
+          populate: {
+            path: 'department',
+            select: 'name'
+          }
+        });
+
+      if (!ticket) {
+        return sendResponse(res, 404, 'FAILED', 'Ticket not found');
+      }
+
+      return sendResponse(res, 200, 'SUCCESS', 'Ticket details retrieved successfully', ticket);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   // @desc    Create a ticket holding structured nested elements
   // @route   POST /api/tickets
   // @access  Private

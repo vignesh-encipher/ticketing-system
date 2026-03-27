@@ -41,6 +41,12 @@ export default class TicketsState {
     loading: boolean;
   };
   getTicketsLoading: boolean | undefined;
+  getTicketById: { 
+    data: { response: TicketData; status: string; message: string; } | null; 
+    error: string | null; 
+    loading: boolean;
+  };
+  getTicketByIdLoading: boolean | undefined;
   createTicketLoading: boolean | undefined;
   updateTicketLoading: boolean | undefined;
   deleteTicketLoading: boolean | undefined;
@@ -52,6 +58,12 @@ export default class TicketsState {
       loading: false
     };
     this.getTicketsLoading = false;
+    this.getTicketById = {
+      data: null,
+      error: null,
+      loading: false
+    };
+    this.getTicketByIdLoading = false;
     this.createTicketLoading = false;
     this.updateTicketLoading = false;
     this.deleteTicketLoading = false;

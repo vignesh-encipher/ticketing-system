@@ -1,6 +1,6 @@
 "use client";
-import React from "react";
-import { Tag, Avatar, Button, Input, Timeline, Space } from "antd";
+import React, { useEffect, useState } from "react";
+import { Tag, Avatar, Button, Input, Timeline, Space, Modal } from "antd";
 // Note the '/ai' at the end of the import path
 import {
   AiOutlineFilePdf,
@@ -13,7 +13,13 @@ import {
 } from "react-icons/ai";
 import DiscussionThread from "../components/discussionThread/page";
 import { FaArrowLeft } from "react-icons/fa";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { connect } from "react-redux";
+import TicketsState from "@/state/tickets/model";
+import { actions as ticketsActions } from "@/state/tickets";
+import dayjs from "dayjs";
+import { formatFileSize } from "@/util/formatting";
+import AttachmentModal from "../components/attachment/page";
 
 interface TicketProps {
   id: string;
@@ -23,12 +29,9 @@ interface TicketProps {
   raisedBy: { name: string; timestamp: string };
   description: string;
   attachments: Array<{ name: string; size: string; type: "pdf" | "image" }>;
-  properties: {
-    assignee: { name: string; initials: string };
-    department: string;
-    target: string;
-    lastUpdated: string;
-  };
+  assignee: { name: string; profileImage: string, department: {id: string, name: string} };
+  createdBy: { name: string; profileImage: string, department: {id: string, name: string} };
+
   comments: Array<{
     id: string;
     senderId: string;
@@ -45,7 +48,7 @@ interface TicketProps {
   }>;
 }
 
-const data: TicketProps = {
+const datas: any = {
   id: "TK-88241",
   title: "Network Latency Issues in Region West-4",
   status: "IN PROGRESS",
@@ -60,12 +63,7 @@ const data: TicketProps = {
     { name: "latency_report_v1.pdf", size: "1.2 MB", type: "pdf" },
     { name: "error_log_screenshot.png", size: "450 KB", type: "image" },
   ],
-  properties: {
-    assignee: { name: "Alex Rivera", initials: "AR" },
-    department: "IT Infrastructure",
-    target: "Network Ops",
-    lastUpdated: "Oct 24, 2023 • 16:45 PM",
-  },
+
   activities: [
     {
       user: "Sarah Chen",
@@ -168,10 +166,40 @@ const data: TicketProps = {
   ],
 };
 
-const DynamicTicketView: React.FC<TicketProps> = () => {
-  const router = useRouter();
-  if (!data) return <div>Loading...</div>;
+interface TicketsPageProps {
+  getTicketById: (params: any) => Promise<any>;
+  getTicketByIdData: any;
+  getTicketByIdLoad?: boolean;
+}
 
+const DynamicTicketView = ({
+  getTicketById,
+  getTicketByIdData,
+  getTicketByIdLoad,
+}: TicketsPageProps) => {
+  const router = useRouter();
+  const { id } = useParams();
+
+  const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleAttachmentClick = (file: any) => {
+    setSelectedAttachment(file);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedAttachment(null);
+  };
+
+  useEffect(() => {
+    getTicketById(id);
+  }, [id]);
+
+  const data = getTicketByIdData?.response;
+
+  if (!data) return <div>Loading...</div>;
   return (
     <div className="h-[80vh] bg-white font-sans text-slate-900">
       {/* --- HEADER --- */}
@@ -179,7 +207,7 @@ const DynamicTicketView: React.FC<TicketProps> = () => {
         <div>
           <div className="flex gap-2 mb-4">
             <Tag className="bg-indigo-50 text-indigo-700 border-none font-bold px-3 py-1">
-              #{data.id}
+              #{data.ticketId}
             </Tag>
             <Tag color="processing" className="font-bold px-3 py-1 uppercase">
               {data.status}
@@ -204,11 +232,9 @@ const DynamicTicketView: React.FC<TicketProps> = () => {
             Raised By
           </p>
           <p className="font-bold text-slate-800 text-lg leading-none">
-            {data.raisedBy.name}
+            {data.createdBy.name}
           </p>
-          <p className="text-slate-400 text-sm mt-1">
-            {data.raisedBy.timestamp}
-          </p>
+          <p className="text-slate-400 text-sm mt-1">{data.createdAt ? dayjs(data.createdAt).format("DD-MM-YYYY hh:mm A") : "N/A"}</p>
         </div>
       </div>
 
@@ -233,10 +259,11 @@ const DynamicTicketView: React.FC<TicketProps> = () => {
                   Attachments ({data.attachments.length})
                 </p>
                 <div className="flex flex-wrap gap-4">
-                  {data.attachments.map((file, index) => (
+                  {data.attachments.map((file: any, index: number) => (
                     <div
                       key={index}
                       className="flex items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 w-72 hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => handleAttachmentClick(file)}
                     >
                       <div className="text-indigo-600 text-2xl">
                         {file.type === "pdf" ? (
@@ -247,10 +274,10 @@ const DynamicTicketView: React.FC<TicketProps> = () => {
                       </div>
                       <div className="overflow-hidden">
                         <p className="text-sm font-bold text-slate-800 truncate m-0">
-                          {file.name}
+                          {file.fileName}
                         </p>
                         <p className="text-xs text-slate-400 m-0">
-                          {file.size}
+                          {formatFileSize(file.fileSize)}
                         </p>
                       </div>
                     </div>
@@ -261,7 +288,7 @@ const DynamicTicketView: React.FC<TicketProps> = () => {
           </div>
           {/* Discussion Thread */}
           <DiscussionThread
-            comments={data.comments}
+            comments={datas.comments}
             currentUserId="admin_456"
           />
         </div>
@@ -279,19 +306,12 @@ const DynamicTicketView: React.FC<TicketProps> = () => {
                 </p>
                 <div className="flex items-center gap-3">
                   <Avatar className="bg-[#1e2b6a] font-bold">
-                    {data.properties.assignee.initials}
+                    {data.assignee.profileImage}
                   </Avatar>
                   <span className="font-bold text-slate-800">
-                    {data.properties.assignee.name}
+                    {data.assignee.name}
                   </span>
                 </div>
-                <Button
-                  type="link"
-                  icon={<AiOutlineUserAdd />}
-                  className="p-0 h-auto text-xs font-bold mt-2 text-indigo-600 uppercase"
-                >
-                  Reassign
-                </Button>
               </div>
               <div className="grid grid-cols-2 gap-4 border-t border-blue-100 pt-4">
                 <div>
@@ -299,7 +319,7 @@ const DynamicTicketView: React.FC<TicketProps> = () => {
                     Dept
                   </p>
                   <p className="font-bold text-slate-800 text-sm">
-                    {data.properties.department}
+                    {data.createdBy.department.name}
                   </p>
                 </div>
                 <div>
@@ -307,7 +327,7 @@ const DynamicTicketView: React.FC<TicketProps> = () => {
                     Target
                   </p>
                   <p className="font-bold text-slate-800 text-sm">
-                    {data.properties.target}
+                    {data.assignee.department.name}
                   </p>
                 </div>
               </div>
@@ -320,7 +340,7 @@ const DynamicTicketView: React.FC<TicketProps> = () => {
             </div>
             <div className="h-[40vh] overflow-y-scroll pt-1">
               <Timeline
-                items={data.activities.map((act) => ({
+                items={datas.activities.map((act: any) => ({
                   color: act.status === "success" ? "green" : "blue",
                   children: (
                     <div className="pb-4">
@@ -373,8 +393,25 @@ const DynamicTicketView: React.FC<TicketProps> = () => {
           <Button icon={<AiOutlineClose />} type="text" />
         </div>
       </div>
+
+      {/* --- ATTACHMENT MODAL --- */}
+      <AttachmentModal
+        selectedAttachment={selectedAttachment}
+        isModalOpen={isModalOpen}
+        handleModalClose={handleModalClose}
+      />
     </div>
   );
 };
 
-export default DynamicTicketView;
+const enhancer = connect(
+  (state: { tickets: TicketsState }) => ({
+    getTicketByIdData: state.tickets.getTicketById.data,
+    getTicketByIdLoad: state.tickets.getTicketByIdLoading,
+  }),
+  {
+    getTicketById: ticketsActions.getTicketById,
+  },
+);
+
+export default enhancer(DynamicTicketView);

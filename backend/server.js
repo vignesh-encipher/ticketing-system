@@ -5,6 +5,12 @@ const cors = require('cors');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
+const http = require('http');
+const server = http.createServer(app);
+const { initSocket } = require('./utils/socket');
+
+// Initialize Socket.io
+initSocket(server);
 
 // Middleware
 app.use(express.json({ limit: '50mb' }));
@@ -47,7 +53,7 @@ mongoose.connect(process.env.MONGO_URI).then(async () => {
         console.error('Failed to seed admin', err);
     }
 
-    app.listen(process.env.PORT || 5000, () => {
+    server.listen(process.env.PORT || 5000, () => {
         console.log(`Server running on port ${process.env.PORT || 5000}`);
     });
 }).catch(err => {
