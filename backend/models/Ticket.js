@@ -32,12 +32,20 @@ const ticketSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Open','Reopened', 'In Progress', 'On Hold', 'Resolved', 'Closed'],
+    enum: ['Open','Reopened', 'In Progress', 'On Hold', 'Resolved', 'Closed', 'PENDING_APPROVAL', 'ASSIGNED'],
     default: 'Open'
   },
   assignee: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  },
+  approvalToken: {
+    type: String,
+    default: null
+  },
+  expiresAt: {
+    type: Date,
+    default: null
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,

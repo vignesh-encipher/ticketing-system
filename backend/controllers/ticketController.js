@@ -1,6 +1,8 @@
 const Ticket = require('../models/Ticket');
 const ActivityLog = require('../models/ActivityLog');
 const User = require('../models/User');
+const crypto = require('crypto');
+const { sendApprovalEmail } = require('../utils/mailer');
 const { sendResponse } = require('../utils/responseHelper');
 
 class TicketController {
@@ -299,6 +301,96 @@ class TicketController {
       }
 
       return sendResponse(res, 200, 'SUCCESS', 'Ticket updated successfully', ticket);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // @desc    Assign ticket with admin approval
+  // @route   POST /api/tickets/assign
+  // @access  Private
+  async assignTicket(req, res, next) {
+    try {
+      const { ticketId, assigneeId } = req.body;
+
+      if (!ticketId || !assigneeId) {
+        return sendResponse(res, 400, 'FAILED', 'Missing required fields: ticketId, assigneeId');
+      }
+
+      const ticket = await Ticket.findById(ticketId);
+      if (!ticket) {
+        return sendResponse(res, 404, 'FAILED', 'Ticket not found');
+      }
+
+      const assignee = await User.findById(assigneeId);
+      if (!assignee) {
+        return sendResponse(res, 404, 'FAILED', 'Assignee not found');
+      }
+
+      const approvalToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      ticket.status = 'PENDING_APPROVAL';
+      ticket.assignee = assigneeId;
+      ticket.approvalToken = approvalToken;
+      ticket.expiresAt = expiresAt;
+
+      await ticket.save();
+
+      // Send approval email
+      await sendApprovalEmail({
+        ticketId: ticket.ticketId,
+        title: ticket.title,
+        assigneeName: assignee.name,
+        approvalToken
+      });
+
+      return sendResponse(res, 200, 'SUCCESS', 'Assignment request sent for admin approval', {
+        ticketId: ticket.ticketId,
+        status: ticket.status
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // @desc    Approve ticket assignment
+  // @route   GET /api/tickets/approve/:token
+  // @access  Public
+  async approveTicket(req, res, next) {
+    try {
+      const { token } = req.params;
+
+      const ticket = await Ticket.findOne({
+        approvalToken: token,
+        expiresAt: { $gt: Date.now() }
+      }).populate('assignee', 'name');
+
+      if (!ticket) {
+        return res.status(400).send('Invalid or expired approval token.');
+      }
+
+      ticket.status = 'ASSIGNED';
+      ticket.approvalToken = null;
+      ticket.expiresAt = null;
+
+      await ticket.save();
+
+      // Create activity log
+      const activityLog = new ActivityLog({
+        ticketId: ticket._id,
+        action: 'ASSIGNED',
+        status: 'success',
+        userDetails: {
+          name: 'System Admin',
+          email: 'abc@encipherhealth.com',
+          roleType: 'Admin'
+        }
+      });
+      await activityLog.save();
+
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      return res.redirect(`${frontendUrl}/admin/tickets/success?approved=true&ticketId=${ticket.ticketId}`);
     } catch (error) {
       next(error);
     }
