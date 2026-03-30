@@ -1,6 +1,15 @@
 "use client";
 import React, { useState } from "react";
-import { Form, Input, Select, Button, Upload, message, Drawer } from "antd";
+import {
+  Form,
+  Input,
+  Select,
+  Button,
+  Upload,
+  message,
+  Drawer,
+  Checkbox,
+} from "antd";
 import {
   BoldOutlined,
   ItalicOutlined,
@@ -42,6 +51,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [assignees, setAssignees] = useState<any[]>([]);
+  const [mailTrigger, setMailTrigger] = useState(false);
   const [ticketData, setTicketData] = useState<{
     htmlContent: string;
     attachments: File[];
@@ -114,6 +124,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({
     onClose();
     form.resetFields();
     setAssignees([]);
+    setMailTrigger(false);
     setTicketData({
       htmlContent: "",
       attachments: [],
@@ -199,7 +210,56 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({
             />
           </Form.Item>
         </div>
+        <div className="flex items-center mb-3 gap-2">
+          <Checkbox checked={mailTrigger} onChange={(e) => setMailTrigger(e.target.checked)}>Mail Trigger</Checkbox>
+        </div>
+        {mailTrigger && 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Form.Item
+            name="mailTargetDept"
+            label={
+              <span className="font-bold text-xs uppercase tracking-wider text-slate-600">
+                Mail Target Department
+              </span>
+            }
+            rules={[{ required: true, message: "Please select a department" }]}
+          >
+            <Select
+              placeholder="Select Mail Target Department"
+              className="h-12 w-full"
+              size="large"
+              onChange={getAssignees}
+              options={departmentsData?.response?.departments?.map(
+                (item: any) => ({
+                  value: item.name,
+                  label: item.name,
+                }),
+              )}
+              showSearch
+              allowClear
+            />
+          </Form.Item>
 
+          <Form.Item
+            name="mailAssigneeId"
+            label={
+              <span className="font-bold text-xs uppercase tracking-wider text-slate-600">
+                Mail Assignee
+              </span>
+            }
+            rules={[{ required: true, message: "Please select an assignee" }]}
+          >
+            <Select
+              placeholder="Select Mail Assignee"
+              className="h-12 w-full"
+              size="large"
+              options={assignees}
+              showSearch
+              allowClear
+            />
+          </Form.Item>
+        </div>
+}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Form.Item
             name="priority"
