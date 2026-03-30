@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
+const Department = require('../models/Department');
 const { sendResponse } = require('../utils/responseHelper');
 
 // Helper to generate access token (15 mins)
@@ -78,6 +79,9 @@ const loginUser = asyncHandler(async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
+    // Get full department object
+    const department = await Department.findById(user.department);
+
     return sendResponse(res, 200, 'SUCCESS', 'Login successful', {
       user: {
         id: user._id,
@@ -85,7 +89,7 @@ const loginUser = asyncHandler(async (req, res) => {
         email: user.email,
         roleType: user.roleType,
         profileImage: user.profileImage,
-        department: user.department
+        department: { name: department.name, id: department._id }
       },
       accessToken
     });

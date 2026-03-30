@@ -87,6 +87,10 @@ const Reassign = ({
           <p className="text-sm text-gray-500">Employee ID : </p>
           <h1 className="text-md font-bold">{assigneeDetails?.employeeId}</h1>
         </div>
+        <div className="flex items-center gap-2">
+          <p className="text-sm text-gray-500">Team : </p>
+          <h1 className="text-md font-bold">{assigneeDetails?.department?.name}</h1>
+        </div>
       </div>
       <Form form={form} layout="vertical" onFinish={onFinish}>
         <Form.Item

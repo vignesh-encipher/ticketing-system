@@ -26,6 +26,7 @@ import { actions as ticketsActions } from "@/state/tickets";
 import { actions as usersActions } from "@/state/users";
 import { getPriorities, getResponsePopup } from "@/util/formatting";
 import UsersState from "@/state/users/model";
+import { getStorage } from "@/util/storage";
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
@@ -71,6 +72,8 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({
       });
     };
 
+    const getUserId = getStorage("userId")
+
     try {
       const attachments = await Promise.all(
         (values.attachments || []).map(async (file: any) => ({
@@ -89,7 +92,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({
         priority: values.priority,
         status: "Open",
         assigneeId: values.assigneeId,
-        createdById: "69c4e0367be280666dd26855",
+        createdById: getUserId,
         attachments,
       };
 

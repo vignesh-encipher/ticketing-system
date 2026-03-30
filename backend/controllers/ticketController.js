@@ -11,26 +11,72 @@ class TicketController {
   async getTickets(req, res, next) {
     try {
       const { skip, limit, page, search, sort } = req.pagination;
-      const { status, priority, sourceDept, targetDept } = req.query;
+      const { status, priority, sourceDept, targetDept, excludeStatus, createdById } = req.query;
 
       const filter = { isDeleted: false };
-      
+      const andFilters = [];
+
+      // Role-based filtering logic
+      if (req.user.roleType === 'Member') {
+        // Members see only what they created or what is assigned to them
+        andFilters.push({
+          $or: [
+            { assignee: req.user.id },
+            { createdBy: req.user.id }
+          ]
+        });
+      } else if (req.user.roleType === 'Lead') {
+        // Leads see tickets targeting their department OR tickets they created
+        const user = await User.findById(req.user.id).populate('department');
+        if (user && user.department) {
+          andFilters.push({
+            $or: [
+              { targetDept: user.department.name },
+              { createdBy: req.user.id }
+            ]
+          });
+        }
+      }
+
       // Dynamically attach parameters if valid
       if (status && status !== 'All Status') filter.status = status;
+      if (excludeStatus) filter.status = { $ne: excludeStatus };
+      if (createdById) andFilters.push({ createdBy: createdById });
+      
       if (priority && priority !== 'All Priorities') filter.priority = priority;
       if (sourceDept && sourceDept !== 'All Departments') filter.sourceDept = sourceDept;
       if (targetDept && targetDept !== 'All Departments') filter.targetDept = targetDept;
       
       if (search) {
-        filter.$or = [
-          { title: { $regex: search, $options: 'i' } },
-          { ticketId: { $regex: search, $options: 'i' } }
-        ];
+        andFilters.push({
+          $or: [
+            { title: { $regex: search, $options: 'i' } },
+            { ticketId: { $regex: search, $options: 'i' } }
+          ]
+        });
+      }
+
+      if (andFilters.length > 0) {
+        filter.$and = andFilters;
       }
 
       const tickets = await Ticket.find(filter)
-        .populate('assignee', 'name profileImage email')
-        .populate('createdBy', 'name profileImage email')
+        .populate({
+           path: 'assignee',
+          select: 'name profileImage email employeeId department',
+          populate: {
+            path: 'department',
+            select: 'name'
+          }
+        })
+        .populate({
+           path: 'createdBy',
+          select: 'name profileImage email employeeId department',
+          populate: {
+            path: 'department',
+            select: 'name'
+          }
+        })
         .sort(sort || { createdAt: -1 })
         .skip(skip)
         .limit(limit);

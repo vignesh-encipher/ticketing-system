@@ -16,6 +16,10 @@ import TicketsState from "@/state/tickets/model";
 import { actions as ticketsActions } from "@/state/tickets";
 import { actions as usersActions } from "@/state/users";
 import UsersState from "@/state/users/model";
+import { Tabs, TabsProps, Button } from "antd";
+import Reassign from "./components/reassign/page";
+import { getStorage } from "@/util/storage";
+
 
 // Filter configuration matching backend
 const filterItem = [
@@ -51,7 +55,20 @@ const filterItem = [
     active: true,
   },
 ];
-
+const items: TabsProps['items'] = [
+  {
+    key: '1',
+    label: 'Pending',
+  },
+  {
+    key: '2',
+    label: 'Completed',
+  },
+  {
+    key: '3',
+    label: 'My Requests',
+  },
+];
 interface TicketsPageProps {
   getTickets: (params: any) => Promise<any>;
   getTicketsData: any;
@@ -71,11 +88,20 @@ const TicketsPage = ({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [filterItems, setFilterItems] = useState(filterItem);
   const [selectedFilters, setSelectedFilters] = useState({});
+  const [activeTab, setActiveTab] = useState("1");
   const [tableParams, setTableParams] = useState({
     page: 1,
     limit: 10,
     search: "",
   });
+
+  const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
+
+  const userJson = typeof window !== "undefined" ? sessionStorage.getItem("user") : null;
+  const currentUser = userJson ? JSON.parse(userJson) : null;
+  const userRole = currentUser?.roleType;
+
 
   // Handle table pagination manually
   const handleTableChange = (pagination: any, filters: any, sorter: any) => {
@@ -197,21 +223,53 @@ const TicketsPage = ({
       title: "",
       key: "actions",
       align: "right",
-      width: 50,
-      render: () => (
-        <button
-          className="text-gray-400 hover:text-[#143477] transition-colors p-1"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <AiOutlineMore className="text-2xl" />
-        </button>
+      width: 150,
+      render: (_, record) => (
+        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+          {userRole === "Lead" && (
+            <Button
+              type="primary"
+              size="small"
+              className="bg-[#143477] text-[11px] font-bold h-7 px-3 rounded-md"
+              onClick={() => {
+                setSelectedRecord(record);
+                setIsReassignModalOpen(true);
+              }}
+            >
+              Assign to Team
+            </Button>
+          )}
+          <button className="text-gray-400 hover:text-[#143477] transition-colors p-1">
+            <AiOutlineMore className="text-2xl" />
+          </button>
+        </div>
       ),
     },
   ];
 
   const getTicketsListApi = async () => {
+    const user = typeof window !== "undefined" ? JSON.parse(sessionStorage.getItem("user") || "{}") : {};
+    const department = user.department?.name;
     try {
-      const res = await getTickets({ ...tableParams, ...selectedFilters });
+      const params: any = { ...tableParams, ...selectedFilters };
+      console.log(department, user, "department")
+      // Inject tab-specific filters
+      if (activeTab === "1") {
+        // Pending: Status != Resolved
+        params.excludeStatus = "Resolved";
+        if (department) params.department = department;
+      } else if (activeTab === "2") {
+        // Completed: Status == Resolved
+        params.status = "Resolved";
+      } else if (activeTab === "3") {
+        // My Requests: CreatedBy == currentUserId
+        const currentUserId = typeof window !== "undefined" ? sessionStorage.getItem("userId") : null;
+        if (currentUserId) {
+          params.createdById = currentUserId;
+        }
+      }
+
+      const res = await getTickets(params);
       return res;
     } catch (error) {
       return error;
@@ -224,7 +282,7 @@ const TicketsPage = ({
 
   useEffect(() => {
     getTicketsListApi();
-  }, [tableParams, selectedFilters]);
+  }, [tableParams, selectedFilters, activeTab]);
 
   useEffect(() => {
     if (departmentsData?.status == "SUCCESS") {
@@ -245,7 +303,12 @@ const TicketsPage = ({
         }
         return item;
       });
-      setFilterItems(data);
+      if (activeTab === "1") {
+        const filteredData = data.filter((item: any) => item.name !== "department");
+        setFilterItems(filteredData);
+      } else {
+        setFilterItems(data);
+      }
     }
   }, [departmentsData]);
 
@@ -254,6 +317,12 @@ const TicketsPage = ({
     (ticket: any) => ticket.priority === "Critical",
   ).length;
   const ticketsList = getTicketsData?.response?.tickets;
+
+  const onChange = (key: string) => {
+    setActiveTab(key);
+    // Reset to page 1 when switching tabs
+    setTableParams(prev => ({ ...prev, page: 1 }));
+  };
 
   return (
     <div className="h-full flex flex-col pb-12 pt-6">
@@ -292,7 +361,9 @@ const TicketsPage = ({
           </div> */}
         </div>
       </div>
-
+      <div>
+        <Tabs activeKey={activeTab} items={items} onChange={onChange} />
+      </div>
       {/* Filters Section */}
       <div className="mb-8 flex">
         <Filters
@@ -341,6 +412,20 @@ const TicketsPage = ({
         onClose={() => setIsDrawerOpen(false)}
         getTicketsListApi={getTicketsListApi}
       />
+
+      {/* Reassign Modal */}
+      {selectedRecord && (
+        <Reassign
+          open={isReassignModalOpen}
+          handleOk={() => {
+            setIsReassignModalOpen(false);
+            getTicketsListApi();
+          }}
+          handleCancel={() => setIsReassignModalOpen(false)}
+          assigneeDetails={selectedRecord.assignee || {}}
+          ticketId={selectedRecord.id}
+        />
+      )}
     </div>
   );
 };

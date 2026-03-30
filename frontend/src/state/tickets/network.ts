@@ -1,14 +1,25 @@
 import { requestPortal } from "@/util/network";
 
 export async function getTickets(params?: any) {
-  const { page = 1, limit = 10, search = "", sortByField = "", sortByType = "", department = "", status = "", priority = "" } = params || {};
+  const { 
+    page = 1, 
+    limit = 10, 
+    search = "", 
+    sortByField = "", 
+    sortByType = "", 
+    department = "", 
+    status = "", 
+    priority = "",
+    excludeStatus = "",
+    createdById = ""
+  } = params || {};
   
   const options = {
     method: "GET",
   };
 
   const data = await requestPortal(
-    `tickets?page=${page}&limit=${limit}&search=${search}&sortByField=${sortByField}&sortByType=${sortByType}&sourceDept=${department}&status=${status}&priority=${priority}`,
+    `tickets?page=${page}&limit=${limit}&search=${search}&sortByField=${sortByField}&sortByType=${sortByType}&targetDept=${department}&status=${status}&priority=${priority}&excludeStatus=${excludeStatus}&createdById=${createdById}`,
     options
   );
 
