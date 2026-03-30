@@ -25,159 +25,8 @@ dayjs.extend(relativeTime);
 import { formatFileSize, getResponsePopup } from "@/util/formatting";
 import AttachmentModal from "../components/attachment/page";
 import { getStorage } from "@/util/storage";
-
-interface TicketProps {
-  id: string;
-  title: string;
-  status: string;
-  priority: string;
-  raisedBy: { name: string; timestamp: string };
-  description: string;
-  attachments: Array<{ name: string; size: string; type: "pdf" | "image" }>;
-  assignee: {
-    name: string;
-    profileImage: string;
-    department: { id: string; name: string };
-  };
-  createdBy: {
-    name: string;
-    profileImage: string;
-    department: { id: string; name: string };
-  };
-
-  comments: Array<{
-    id: string;
-    senderId: string;
-    senderName: string;
-    role: string;
-    text: string;
-    time: string;
-  }>;
-  activities: Array<{
-    user: string;
-    action: string;
-    time: string;
-    status: string;
-  }>;
-}
-
-const datas: any = {
-  id: "TK-88241",
-  title: "Network Latency Issues in Region West-4",
-  status: "IN PROGRESS",
-  priority: "HIGH PRIORITY",
-  raisedBy: {
-    name: "Marcus Sterling",
-    timestamp: "Oct 24, 2023 • 14:20 PM",
-  },
-  description:
-    "We are observing intermittent packet loss and significant latency spikes affecting the CRM application for users routed through the West-4 gateway.",
-  attachments: [
-    { name: "latency_report_v1.pdf", size: "1.2 MB", type: "pdf" },
-    { name: "error_log_screenshot.png", size: "450 KB", type: "image" },
-  ],
-
-  activities: [
-    {
-      user: "Sarah Chen",
-      action: "Comment added",
-      time: "45 mins ago",
-      status: "success",
-    },
-    {
-      user: "Alex Rivera",
-      action: "Assigned",
-      time: "2 hours ago",
-      status: "processing",
-    },
-    {
-      user: "Sarah Chen",
-      action: "Comment added",
-      time: "45 mins ago",
-      status: "success",
-    },
-    {
-      user: "Alex Rivera",
-      action: "Assigned",
-      time: "2 hours ago",
-      status: "processing",
-    },
-    {
-      user: "Sarah Chen",
-      action: "Comment added",
-      time: "45 mins ago",
-      status: "success",
-    },
-    {
-      user: "Alex Rivera",
-      action: "Assigned",
-      time: "2 hours ago",
-      status: "processing",
-    },
-    {
-      user: "Sarah Chen",
-      action: "Comment added",
-      time: "45 mins ago",
-      status: "success",
-    },
-    {
-      user: "Alex Rivera",
-      action: "Assigned",
-      time: "2 hours ago",
-      status: "processing",
-    },
-  ],
-  comments: [
-    {
-      id: "c1",
-      senderId: "user_123",
-      senderName: "Marcus Sterling",
-      role: "Creator",
-      text: "Any updates on the BGP rollback?",
-      time: "10 mins ago",
-    },
-    {
-      id: "c2",
-      senderId: "admin_456",
-      senderName: "Alex Rivera",
-      role: "Network Lead",
-      text: "Config is being pushed now. Should see results in 5 mins.",
-      time: "2 mins ago",
-    },
-    {
-      id: "c1",
-      senderId: "user_123",
-      senderName: "Marcus Sterling",
-      role: "Creator",
-      text: "Any updates on the BGP rollback?",
-      time: "10 mins ago",
-    },
-    {
-      id: "c2",
-      senderId: "admin_456",
-      senderName: "Alex Rivera",
-      role: "Network Lead",
-      text: "Config is being pushed now. Should see results in 5 mins.",
-      time: "2 mins ago",
-    },
-    {
-      id: "c1",
-      senderId: "user_123",
-      senderName: "Marcus Sterling",
-      role: "Creator",
-      text: "Any updates on the BGP rollback?",
-      time: "10 mins ago",
-    },
-    {
-      id: "c2",
-      senderId: "admin_456",
-      senderName: "Alex Rivera",
-      role: "Network Lead",
-      text: "Config is being pushed now. Should see results in 5 mins.",
-      time: "2 mins ago",
-    },
-  ],
-};
+import Reassign from "../components/reassign/page";
+import StatusChange from "../components/statusChange/page";
 
 interface TicketsPageProps {
   getTicketById: (params: any) => Promise<any>;
@@ -192,6 +41,7 @@ interface TicketsPageProps {
   getActivityLogs: (ticketId: string) => Promise<any>;
   getActivityLogsData: any;
   getActivityLogsLoad?: boolean;
+  updateStatusPriority: (payload: any) => Promise<any>;
 }
 
 const DynamicTicketView = ({
@@ -207,6 +57,7 @@ const DynamicTicketView = ({
   getActivityLogs,
   getActivityLogsData,
   getActivityLogsLoad,
+  updateStatusPriority,
 }: TicketsPageProps) => {
   const router = useRouter();
   const { id } = useParams();
@@ -214,6 +65,8 @@ const DynamicTicketView = ({
   const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
+  const [isStatusChangeModalOpen, setIsStatusChangeModalOpen] = useState(false);
   const [editingDescription, setEditingDescription] = useState("");
   const [commentText, setCommentText] = useState("");
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -289,6 +142,19 @@ const DynamicTicketView = ({
     }
   };
 
+  const handleReopenTicket = async () => {
+     const userId = getStorage("userId") || "69c62bbb45c503f96ab8ae2d";
+     const res = await updateStatusPriority({
+        ticketId: id,
+        status: "Reopened",
+        userId: userId,
+     });
+     if(res?.status === "SUCCESS"){
+        getResponsePopup(res);
+        getTicketById(id);
+     }
+  }
+
   const data = getTicketByIdData?.response;
   const activityLogs = getActivityLogsData?.response?.logs || [];
 
@@ -322,18 +188,32 @@ const DynamicTicketView = ({
             {data.title}
           </h1>
         </div>
-        <div className="text-right">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
-            Raised By
-          </p>
-          <p className="font-bold text-slate-800 text-lg leading-none">
-            {data.createdBy.name}
-          </p>
-          <p className="text-slate-400 text-sm mt-1">
-            {data.createdAt
-              ? dayjs(data.createdAt).format("DD-MM-YYYY hh:mm A")
-              : "N/A"}
-          </p>
+        <div className="flex gap-4 items-center">
+          {data?.status == "Resolved" ||
+            (data?.status == "Closed" && (
+              <div>
+                <Button
+                  type="primary"
+                  onClick={handleReopenTicket}
+                  className="bg-[#1e2b6a]"
+                >
+                  Reopen Ticket
+                </Button>
+              </div>
+            ))}
+          <div className="text-right">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
+              Raised By
+            </p>
+            <p className="font-bold text-slate-800 text-lg leading-none">
+              {data.createdBy.name}
+            </p>
+            <p className="text-slate-400 text-sm mt-1">
+              {data.createdAt
+                ? dayjs(data.createdAt).format("DD-MM-YYYY hh:mm A")
+                : "N/A"}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -342,7 +222,7 @@ const DynamicTicketView = ({
         <div
           ref={scrollRef}
           className="flex-1 space-y-10"
-          style={{ height: "70vh", overflowY: "auto" }}
+          style={{ height: "75vh", overflowY: "auto" }}
         >
           <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-8">
             <div className="flex items-center justify-between mb-6">
@@ -398,7 +278,7 @@ const DynamicTicketView = ({
             )}
           </div>
           {/* Discussion Thread */}
-          <DiscussionThread 
+          <DiscussionThread
             comments={getCommentsData?.response?.comments || []}
             currentUserId={currentUserId}
           />
@@ -417,7 +297,9 @@ const DynamicTicketView = ({
                 </p>
                 <div className="flex items-center gap-3">
                   <Avatar className="bg-[#1e2b6a] font-bold">
-                    {data.assignee.profileImage ? "" : data.assignee.name?.charAt(0)}
+                    {data.assignee.profileImage
+                      ? ""
+                      : data.assignee.name?.charAt(0)}
                     {data.assignee.profileImage}
                   </Avatar>
                   <span className="font-bold text-slate-800">
@@ -460,7 +342,8 @@ const DynamicTicketView = ({
                         {act.action}
                       </p>
                       <p className="text-[10px] text-slate-400 m-0">
-                        {act.userDetails?.name || "System"} • {dayjs(act.createdAt).fromNow()}
+                        {act.userDetails?.name || "System"} •{" "}
+                        {dayjs(act.createdAt).fromNow()}
                       </p>
                     </div>
                   ),
@@ -472,51 +355,80 @@ const DynamicTicketView = ({
       </div>
 
       {/* --- STICKY FOOTER ACTION BAR --- */}
-      <div
-        className="fixed bottom-0 left-0 right-0 bg-white border-t gap-3 border-slate-100 p-4 px-8 flex justify-between items-center shadow-[0_-4px_20px_rgba(0,0,0,0.03)]"
-        style={{ marginLeft: "260px" }}
-      >
-        <Input
-          placeholder="Add a comment... (use @ to mention)"
-          className="h-11 bg-slate-50 border-none rounded-lg"
-          value={commentText}
-          onChange={(e) => setCommentText(e.target.value)}
-          onPressEnter={handleSendComment}
-          disabled={addCommentLoad}
-        />
-        <div className="flex items-center gap-4">
-          <Button
-            type="primary"
-            size="large"
-            className="bg-[#1e2b6a] h-11 px-6 font-bold flex items-center gap-2"
-            onClick={handleSendComment}
-            loading={addCommentLoad}
-          >
-            Send <AiOutlineSend />
-          </Button>
-          <div className="h-6 w-[1px] bg-slate-200 mx-2" />
-          <Button
-            icon={<AiOutlineRetweet />}
-            type="text"
-            className="font-bold text-slate-600"
-          >
-            Reassign
-          </Button>
-          <Button type="text" className="font-bold text-slate-600">
-            Change Status
-          </Button>
-          <Button className="bg-emerald-100 text-emerald-700 border-none h-11 px-6 font-bold hover:bg-emerald-200">
-            Resolve Ticket
-          </Button>
-          <Button icon={<AiOutlineClose />} type="text" />
+      {data?.status !== "Resolved" && data?.status !== "Closed" && (
+        <div
+          className="fixed bottom-0 left-0 right-0 bg-white border-t gap-3 border-slate-100 p-4 px-8 flex justify-between items-center shadow-[0_-4px_20px_rgba(0,0,0,0.03)]"
+          style={{ marginLeft: "260px" }}
+        >
+          <Input
+            placeholder="Add a comment... (use @ to mention)"
+            className="h-11 bg-slate-50 border-none rounded-lg"
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            onPressEnter={handleSendComment}
+            disabled={addCommentLoad}
+          />
+          <div className="flex items-center gap-4">
+            <Button
+              type="primary"
+              size="large"
+              className="bg-[#1e2b6a] h-11 px-6 font-bold flex items-center gap-2"
+              onClick={handleSendComment}
+              loading={addCommentLoad}
+            >
+              Send <AiOutlineSend />
+            </Button>
+            <div className="h-6 w-[1px] bg-slate-200 mx-2" />
+            <Button
+              icon={<AiOutlineRetweet />}
+              type="text"
+              className="font-bold text-slate-600"
+              onClick={() => setIsReassignModalOpen(true)}
+            >
+              Reassign
+            </Button>
+            <Button
+              type="text"
+              className="font-bold text-slate-600"
+              onClick={() => setIsStatusChangeModalOpen(true)}
+            >
+              Change Status
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* --- ATTACHMENT MODAL --- */}
       <AttachmentModal
         selectedAttachment={selectedAttachment}
         isModalOpen={isModalOpen}
         handleModalClose={handleModalClose}
+      />
+      {/* Reassign Modal */}
+      <Reassign
+        open={isReassignModalOpen}
+        handleOk={() => {
+          setIsReassignModalOpen(false);
+          getTicketById(id);
+          getActivityLogs(id as string);
+        }}
+        handleCancel={() => setIsReassignModalOpen(false)}
+        assigneeDetails={data?.assignee || {}}
+        ticketId={data?.id}
+      />
+
+      {/* Status Change Modal */}
+      <StatusChange
+        open={isStatusChangeModalOpen}
+        handleOk={() => {
+          setIsStatusChangeModalOpen(false);
+          getTicketById(id);
+          getActivityLogs(id as string);
+        }}
+        handleCancel={() => setIsStatusChangeModalOpen(false)}
+        statusDetails={data?.status}
+        priorityDetails={data?.priority}
+        ticketId={data?.id}
       />
 
       {/* --- EDIT DESCRIPTION MODAL --- */}
@@ -571,6 +483,7 @@ const enhancer = connect(
     getComments: ticketsActions.getComments,
     addComment: ticketsActions.addComment,
     getActivityLogs: ticketsActions.getActivityLogs,
+     updateStatusPriority: ticketsActions.updateStatusPriority,
   },
 );
 

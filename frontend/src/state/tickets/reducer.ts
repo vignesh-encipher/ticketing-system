@@ -1,6 +1,6 @@
 import { combineReducers } from "redux";
 import { handleActions } from "redux-actions";
-import { getTickets, createTicket, updateTicket, deleteTicket, getTicketById, getComments, addComment, getActivityLogs } from "./actions";
+import { getTickets, createTicket, updateTicket, deleteTicket, getTicketById, getComments, addComment, getActivityLogs, reassignTicket, updateStatusPriority } from "./actions";
 
 const initialState = {
   loading: true,
@@ -52,6 +52,8 @@ const codifyReducer = combineReducers({
   addCommentLoading: getLoading(addComment),
   getActivityLogs: createReducer(getActivityLogs),
   getActivityLogsLoading: getLoading(getActivityLogs),
+  reassignTicketLoading: getLoading(reassignTicket),
+  updateStatusPriorityLoading: getLoading(updateStatusPriority),
 });
 
 export default codifyReducer;

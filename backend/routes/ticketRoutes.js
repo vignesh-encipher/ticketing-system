@@ -12,6 +12,9 @@ router.route('/')
   .get(paginationMiddleware, ticketController.getTickets)
   .post(ticketController.createTicket);
 
+router.post('/reassign', ticketController.reassignTicket);
+router.post('/update-status-priority', ticketController.updateStatusPriority);
+
 router.get('/:id/logs', activityLogController.getTicketLogs);
 
 router.route('/:id')

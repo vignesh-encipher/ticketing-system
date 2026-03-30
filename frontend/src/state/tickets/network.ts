@@ -76,3 +76,21 @@ export async function getActivityLogs(ticketId: string, params?: any) {
   const data = await requestPortal(`activity/${ticketId}?page=${page}&limit=${limit}`, options);
   return data;
 }
+
+export async function reassignTicket(payload: any) {
+  const options = {
+    method: "POST",
+    body: JSON.stringify(payload),
+  };
+  const data = await requestPortal(`tickets/reassign`, options);
+  return data;
+}
+
+export async function updateStatusPriority(payload: any) {
+  const options = {
+    method: "POST",
+    body: JSON.stringify(payload),
+  };
+  const data = await requestPortal(`tickets/update-status-priority`, options);
+  return data;
+}

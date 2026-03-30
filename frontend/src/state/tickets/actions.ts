@@ -40,3 +40,13 @@ export const getActivityLogs = createActionThunk(
   'GET_ADMIN_TICKET_ACTIVITY',
   network.getActivityLogs
 );
+
+export const reassignTicket = createActionThunk(
+  'REASSIGN_ADMIN_TICKET',
+  network.reassignTicket
+);
+
+export const updateStatusPriority = createActionThunk(
+  'UPDATE_ADMIN_TICKET_STATUS_PRIORITY',
+  network.updateStatusPriority
+);

@@ -10,7 +10,7 @@ const AttachmentModal = ({ selectedAttachment, isModalOpen, handleModalClose }: 
       footer={null}
       width={800}
       centered
-      destroyOnClose
+      destroyOnHidden
       styles={{ body: { padding: "20px", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" } }}
     >
       {selectedAttachment && (

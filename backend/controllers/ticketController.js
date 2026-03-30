@@ -1,4 +1,6 @@
 const Ticket = require('../models/Ticket');
+const ActivityLog = require('../models/ActivityLog');
+const User = require('../models/User');
 const { sendResponse } = require('../utils/responseHelper');
 
 class TicketController {
@@ -165,6 +167,138 @@ class TicketController {
       }
 
       return sendResponse(res, 200, 'SUCCESS', 'Ticket deleted successfully', null);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // @desc    Reassign ticket to another user
+  // @route   POST /api/tickets/reassign
+  // @access  Private
+  async reassignTicket(req, res, next) {
+    try {
+      const { ticketId, assigneeId, reassignedBy } = req.body;
+
+      if (!ticketId || !assigneeId || !reassignedBy) {
+        return sendResponse(res, 400, 'FAILED', 'Missing required fields: ticketId, assigneeId, reassignedBy');
+      }
+
+      const ticket = await Ticket.findById(ticketId);
+      if (!ticket) {
+        return sendResponse(res, 404, 'FAILED', 'Ticket not found');
+      }
+
+      const newAssignee = await User.findById(assigneeId);
+      if (!newAssignee) {
+        return sendResponse(res, 404, 'FAILED', 'New assignee not found');
+      }
+
+      const performer = await User.findById(reassignedBy).populate('department');
+      if (!performer) {
+        return sendResponse(res, 404, 'FAILED', 'Performer user not found');
+      }
+
+      ticket.assignee = assigneeId;
+      await ticket.save();
+
+      // Create activity log
+      const activityLog = new ActivityLog({
+        ticketId: ticket._id,
+        action: 'REASSIGNED',
+        status: 'success',
+        userDetails: {
+          name: performer.name,
+          email: performer.email,
+          employeeId: performer.employeeId,
+          department: performer.department?.name || '', 
+          roleType: performer.roleType,
+          profileImage: performer.profileImage,
+          id: performer._id.toString()
+        }
+      });
+      await activityLog.save();
+
+      return sendResponse(res, 200, 'SUCCESS', 'Ticket reassigned successfully', ticket);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // @desc    Update ticket status and priority with activity logging
+  // @route   POST /api/tickets/update-status-priority
+  // @access  Private
+  async updateStatusPriority(req, res, next) {
+    try {
+      const { ticketId, status, priority, userId } = req.body;
+
+      if (!ticketId || !userId) {
+        return sendResponse(res, 400, 'FAILED', 'Missing required fields: ticketId, userId');
+      }
+
+      const ticket = await Ticket.findById(ticketId);
+      if (!ticket) {
+        return sendResponse(res, 404, 'FAILED', 'Ticket not found');
+      }
+
+      const performer = await User.findById(userId).populate('department');
+      if (!performer) {
+        return sendResponse(res, 404, 'FAILED', 'Performer user not found');
+      }
+
+      const oldStatus = ticket.status;
+      const oldPriority = ticket.priority;
+
+      let statusChanged = false;
+      let priorityChanged = false;
+
+      if (status && status !== oldStatus) {
+        ticket.status = status;
+        statusChanged = true;
+      }
+
+      if (priority && priority !== oldPriority) {
+        ticket.priority = priority;
+        priorityChanged = true;
+      }
+
+      if (!statusChanged && !priorityChanged) {
+        return sendResponse(res, 200, 'SUCCESS', 'No changes detected', ticket);
+      }
+
+      await ticket.save();
+
+      const userDetails = {
+        name: performer.name,
+        email: performer.email,
+        employeeId: performer.employeeId,
+        department: performer.department?.name || '',
+        roleType: performer.roleType,
+        profileImage: performer.profileImage,
+        id: performer._id.toString()
+      };
+
+      // Create activity logs
+      if (statusChanged) {
+        const activityLog = new ActivityLog({
+          ticketId: ticket._id,
+          action: 'STATUS_CHANGED',
+          status: 'success',
+          userDetails
+        });
+        await activityLog.save();
+      }
+
+      if (priorityChanged) {
+        const activityLog = new ActivityLog({
+          ticketId: ticket._id,
+          action: 'PRIORITY_CHANGED',
+          status: 'success',
+          userDetails
+        });
+        await activityLog.save();
+      }
+
+      return sendResponse(res, 200, 'SUCCESS', 'Ticket updated successfully', ticket);
     } catch (error) {
       next(error);
     }

@@ -58,6 +58,14 @@ export const getPriorities = [
   { value: "Low", label: "Low" },
 ];
 
+export const getStatuses = [
+  { value: "Open", label: "Open" },
+  { value: "In Progress", label: "In Progress" },
+  { value: "On Hold", label: "On Hold" },
+  { value: "Resolved", label: "Resolved" },
+  { value: "Closed", label: "Closed" },
+];
+
 export const formatFileSize = (bytes: number, decimals: number = 2) => {
   if (!bytes || bytes === 0) return "0 Bytes";
 

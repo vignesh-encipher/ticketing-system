@@ -32,7 +32,7 @@ export interface ActivityLogData {
   _id: string;
   ticketId: string;
   userDetails: UserDetails;
-  action: 'COMMENT_ADDED' | 'TICKET_CREATED' | 'ASSIGNED' | 'REASSIGNED' | 'STATUS_CHANGED' | 'DESCRIPTION_EDIT';
+  action: 'COMMENT_ADDED' | 'TICKET_CREATED' | 'ASSIGNED' | 'REASSIGNED' | 'STATUS_CHANGED' | 'DESCRIPTION_EDIT' | 'PRIORITY_CHANGED';
   status: 'success' | 'processing' | 'error' | 'warning';
   isDeleted: boolean;
   createdAt: string;
@@ -116,6 +116,8 @@ export default class TicketsState {
     loading: boolean;
   };
   getActivityLogsLoading: boolean | undefined;
+  reassignTicketLoading: boolean | undefined;
+  updateStatusPriorityLoading: boolean | undefined;
 
   constructor() {
     this.getTickets = {
@@ -146,5 +148,7 @@ export default class TicketsState {
       loading: false
     };
     this.getActivityLogsLoading = false;
+    this.reassignTicketLoading = false;
+    this.updateStatusPriorityLoading = false;
   }
 }
