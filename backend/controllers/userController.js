@@ -13,10 +13,10 @@ class UserController {
 
   async createUser(req, res, next) {
     try {
-      const { name, email, employeeId, department, roleType, profileImage } = req.body;
+      const { name, email, employeeId, department, roleType, profileImage, password } = req.body;
       
-      if (!name || !email || !employeeId || !department || !roleType) {
-        return sendResponse(res, 400, 'FAILED', 'name, email, employeeId, department, and roleType are required');
+      if (!name || !email || !employeeId || !department || !roleType || !password) {
+        return sendResponse(res, 400, 'FAILED', 'name, email, employeeId, department, roleType, and password are required');
       }
 
       // Basic validation for email and employeeId uniqueness
@@ -28,7 +28,7 @@ class UserController {
       if (existingEmail) return sendResponse(res, 400, 'FAILED', 'Email already exists');
       if (existingEmpId) return sendResponse(res, 400, 'FAILED', 'Employee ID already exists');
       
-      const newUser = await userService.createUser({ name, email, employeeId, department, roleType, profileImage });
+      const newUser = await userService.createUser({ name, email, employeeId, department, roleType, profileImage, password });
       return sendResponse(res, 201, 'SUCCESS', 'User created successfully', newUser);
     } catch (error) {
       if (error.name === 'ValidationError') {

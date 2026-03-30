@@ -5,6 +5,7 @@ import { Layout, ConfigProvider, theme as antdTheme } from "antd";
 import Header from "./header";
 import Sidebar from "./sidebar";
 import { useTheme } from "./theme-provider";
+import { usePathname, useRouter } from "next/navigation";
 
 const { Content } = Layout;
 
@@ -16,6 +17,8 @@ interface LayoutPageProps {
 const LayoutPage = ({ role = "admin", children }: LayoutPageProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const { theme } = useTheme();
+  const router = useRouter();
+  const pathName = usePathname();
 
   useEffect(() => {
     // Hardcoding userId in session storage as requested for global availability
@@ -39,10 +42,15 @@ const LayoutPage = ({ role = "admin", children }: LayoutPageProps) => {
 
   return (
     <ConfigProvider theme={themeConfig}>
-      <Layout className="min-h-screen bg-white">
-        <div className="fixed top-0 left-0 right-0 z-50">
-          <Header />
-        </div>
+      {pathName == "/login" ? (
+        <>
+        {children}
+        </>
+      ) : (
+        <Layout className="min-h-screen bg-white">
+          <div className="fixed top-0 left-0 right-0 z-50">
+            <Header />
+          </div>
 
         <div className="fixed z-40">
           <Sidebar />
@@ -65,6 +73,7 @@ const LayoutPage = ({ role = "admin", children }: LayoutPageProps) => {
           </Content>
         </Layout>
       </Layout>
+      )}
     </ConfigProvider>
   );
 };

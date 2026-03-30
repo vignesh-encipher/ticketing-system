@@ -58,6 +58,7 @@ const CreateUser = ({
         employeeId: values.employeeId,
         roleType: values.roleType,
         department: values.department,
+        password: values.password,
         profileImage: imageUrl || "", // Note: If your backend expects Base64, convert here ONLY on submit
       };
 
@@ -302,6 +303,25 @@ const CreateUser = ({
                   />
                 </Form.Item>
               </div>
+
+              {/* Password */}
+              <Form.Item
+                label={
+                  <span className="text-gray-500 font-bold text-[11px] uppercase tracking-wider">
+                    Initial Password
+                  </span>
+                }
+                name="password"
+                rules={[
+                  { required: true, message: "Please enter a password" },
+                  { min: 6, message: "Minimum 6 characters" },
+                ]}
+              >
+                <Input.Password
+                  placeholder="••••••••"
+                  className="font-semibold"
+                />
+              </Form.Item>
 
               {/* Permissions */}
               <div className="bg-[#f4f7fe] rounded-[14px] p-6 mt-1 border border-[#edf3fc]">

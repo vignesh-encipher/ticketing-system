@@ -1,45 +1,43 @@
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
+const { sendResponse } = require('../utils/responseHelper');
 
 const protect = asyncHandler(async (req, res, next) => {
-    // BYPASS TOKEN VALIDATION: Allow all requests
-    /*
     let token;
+
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
+            // Get token from header
             token = req.headers.authorization.split(' ')[1];
-            let decoded;
-            try {
-                decoded = jwt.verify(token, process.env.JWT_SECRET);
-            } catch (err) {
-                // Ignore token errors
+
+            // Verify token
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+            // Get user from token
+            req.user = await User.findById(decoded.id).select('-password');
+            
+            if (!req.user) {
+                return sendResponse(res, 401, 'FAILED', 'Not authorized, user not found');
             }
-            if (decoded && decoded.id) {
-                req.user = await User.findById(decoded.id).select('-password');
-            }
+
+            next();
         } catch (error) {
             console.error(error);
+            return sendResponse(res, 401, 'FAILED', 'Not authorized, token failed');
         }
     }
-    */
-    
-    // Mock user if one doesn't exist yet to prevent crashes in downstream routes
-    if (!req.user) {
-        req.user = { id: 'mocked-id', roleType: 'Admin', name: 'Mock User' };
+
+    if (!token) {
+        return sendResponse(res, 401, 'FAILED', 'Not authorized, no token');
     }
-    next();
 });
 
 const authorize = (...roles) => {
     return (req, res, next) => {
-        // BYPASS ROLE VALIDATION: Allow all
-        /*
         if (!roles.includes(req.user.roleType)) {
-            res.status(403);
-            throw new Error(`User role ${req.user.roleType} is not authorized to access this route`);
+            return sendResponse(res, 403, 'FAILED', `User role ${req.user.roleType} is not authorized to access this route`);
         }
-        */
         next();
     };
 };
